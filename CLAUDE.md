@@ -8,11 +8,13 @@
 - Vite + React 18 + TypeScript strict
 - Tailwind CSS + shadcn/ui
 - React Router DOM v6
-- React Context (CartContext, DataContext, SettingsContext) — sem Zustand, sem Redux
+- TanStack Query para server state
+- React Context apenas para auth e carrinho efêmero (AuthContext, CartContext)
 - lucide-react para icones
 - Google Fonts: Cormorant Garamond (display) + Jost (body)
-- **Sem backend** — mock data em `src/data/` (arrays TS tipados)
-- **Sem Supabase** — nenhuma chamada de rede
+- Supabase remoto com Auth, RLS, Edge Function `create-user`, migrations em `supabase/migrations/`
+- Multi-estabelecimento: André é `super_admin`; cada estabelecimento isola produtos, clientes, vendas, itens e settings
+- Mock remanescente apenas para promoções (`src/data/promos.ts`)
 
 ## Comandos
 
@@ -38,10 +40,11 @@ src/
 │   ├── promo/       # PromoCard, SophiaIntroCard
 │   ├── settings/    # ProfileCard, ToggleGroup, MarkupControl, ShopInfo
 │   └── shared/      # SearchInput, GoldButton, BackButton, StockBadge, ToggleSwitch, SectionLabel, ViewToggle
-├── contexts/        # CartContext, DataContext, SettingsContext
-├── hooks/           # useCart, useData, useSettings, useSearch, useMarkupCalculator
-├── data/            # Mock data (products, clients, sales, alerts, promos)
-├── lib/             # utils.ts, pricing.ts, constants.ts
+├── contexts/        # AuthContext, CartContext
+├── hooks/           # useProducts, useClients, useSales, useStoreSettings, useEstablishments, useData, useSettings
+├── data/            # Mock remanescente: promos
+├── integrations/    # Supabase client e types gerados
+├── lib/             # utils.ts, pricing.ts, constants.ts, mappers.ts, client-utils.ts
 ├── types/           # Product, Client, Sale, Alert, Promo, CartItem, PaymentMethod
 └── styles/          # animations.css (fadeup, glow, pop)
 ```
@@ -86,7 +89,11 @@ src/
 
 ## Regras Tecnicas do Projeto
 
-- Mock data sempre acessado via hooks (useData, useCart, useSettings) — nunca importar `src/data/` diretamente nos componentes
+- Dados operacionais sempre via hooks/TanStack Query; não importar tabelas/mock diretamente nos componentes
+- `products_display` é a fonte de leitura de produtos no frontend; custo é mascarado conforme role
+- `establishment_id` é obrigatório para products, clients, sales, sale_items e store_settings
+- Super admin pode usar o seletor de estabelecimento; admin local e funcionário ficam presos ao próprio estabelecimento
+- Criação de usuários passa pela Edge Function `create-user`; service role nunca entra no frontend
 - Logica de pricing (floor90, ceil90, round90) centralizada em `lib/pricing.ts`
 - Valores monetarios formatados com `formatCurrency()` de `lib/utils.ts`
 - Gradientes dourados aplicados via inline style (Tailwind nao suporta gradientes arbitrarios em utility classes)

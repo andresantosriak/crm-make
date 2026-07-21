@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       clients: {
@@ -20,6 +45,7 @@ export type Database = {
           birthday: string | null
           created_at: string
           created_by: string | null
+          establishment_id: string
           id: string
           name: string
           phone: string | null
@@ -30,6 +56,7 @@ export type Database = {
           birthday?: string | null
           created_at?: string
           created_by?: string | null
+          establishment_id: string
           id?: string
           name: string
           phone?: string | null
@@ -40,6 +67,7 @@ export type Database = {
           birthday?: string | null
           created_at?: string
           created_by?: string | null
+          establishment_id?: string
           id?: string
           name?: string
           phone?: string | null
@@ -48,6 +76,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      establishments: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishments_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -62,6 +135,7 @@ export type Database = {
           cost: number
           created_at: string
           created_by: string | null
+          establishment_id: string
           id: string
           name: string
           price: number
@@ -74,6 +148,7 @@ export type Database = {
           cost: number
           created_at?: string
           created_by?: string | null
+          establishment_id: string
           id?: string
           name: string
           price: number
@@ -86,6 +161,7 @@ export type Database = {
           cost?: number
           created_at?: string
           created_by?: string | null
+          establishment_id?: string
           id?: string
           name?: string
           price?: number
@@ -100,11 +176,19 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
         Row: {
           created_at: string
+          establishment_id: string | null
           full_name: string
           id: string
           role: string
@@ -112,6 +196,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          establishment_id?: string | null
           full_name: string
           id: string
           role?: string
@@ -119,15 +204,25 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          establishment_id?: string | null
           full_name?: string
           id?: string
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_items: {
         Row: {
+          establishment_id: string
           id: string
           product_id: string
           quantity: number
@@ -136,6 +231,7 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          establishment_id: string
           id?: string
           product_id: string
           quantity: number
@@ -144,6 +240,7 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          establishment_id?: string
           id?: string
           product_id?: string
           quantity?: number
@@ -152,6 +249,13 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_items_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_items_product_id_fkey"
             columns: ["product_id"]
@@ -167,11 +271,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sale_items_product_tenant_fkey"
+            columns: ["product_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id", "establishment_id"]
+          },
+          {
+            foreignKeyName: "sale_items_product_tenant_fkey"
+            columns: ["product_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "products_display"
+            referencedColumns: ["id", "establishment_id"]
+          },
+          {
             foreignKeyName: "sale_items_sale_id_fkey"
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_tenant_fkey"
+            columns: ["sale_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id", "establishment_id"]
           },
         ]
       }
@@ -180,6 +305,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           created_by: string | null
+          establishment_id: string
           id: string
           items_count: number
           payment_method: string
@@ -190,6 +316,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          establishment_id: string
           id?: string
           items_count: number
           payment_method: string
@@ -200,6 +327,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           created_by?: string | null
+          establishment_id?: string
           id?: string
           items_count?: number
           payment_method?: string
@@ -215,10 +343,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "sales_client_tenant_fkey"
+            columns: ["client_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id", "establishment_id"]
+          },
+          {
             foreignKeyName: "sales_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
             referencedColumns: ["id"]
           },
         ]
@@ -227,6 +369,7 @@ export type Database = {
         Row: {
           birthday_alert_days: number
           default_markup: number
+          establishment_id: string
           id: number
           low_stock_threshold: number
           toggle_aniversario: boolean
@@ -239,6 +382,7 @@ export type Database = {
         Insert: {
           birthday_alert_days?: number
           default_markup?: number
+          establishment_id: string
           id?: number
           low_stock_threshold?: number
           toggle_aniversario?: boolean
@@ -251,6 +395,7 @@ export type Database = {
         Update: {
           birthday_alert_days?: number
           default_markup?: number
+          establishment_id?: string
           id?: number
           low_stock_threshold?: number
           toggle_aniversario?: boolean
@@ -260,7 +405,15 @@ export type Database = {
           updated_at?: string
           vip_threshold?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "store_settings_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -271,6 +424,7 @@ export type Database = {
           cost: number | null
           created_at: string | null
           created_by: string | null
+          establishment_id: string | null
           id: string | null
           name: string | null
           price: number | null
@@ -283,6 +437,7 @@ export type Database = {
           cost?: never
           created_at?: string | null
           created_by?: string | null
+          establishment_id?: string | null
           id?: string | null
           name?: string | null
           price?: number | null
@@ -295,6 +450,7 @@ export type Database = {
           cost?: never
           created_at?: string | null
           created_by?: string | null
+          establishment_id?: string | null
           id?: string | null
           name?: string | null
           price?: number | null
@@ -309,22 +465,44 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Functions: {
+      can_access_establishment: {
+        Args: { p_establishment_id: string }
+        Returns: boolean
+      }
       cancel_sale: { Args: { p_sale_id: string }; Returns: undefined }
+      create_establishment: {
+        Args: { p_name: string; p_slug: string }
+        Returns: string
+      }
       create_sale: {
         Args: {
           p_client_id?: string
+          p_establishment_id?: string
           p_items?: Json
           p_payment_method?: string
         }
         Returns: string
       }
+      current_establishment_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       get_user_role: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      is_establishment_admin_for: {
+        Args: { p_establishment_id: string }
+        Returns: boolean
+      }
+      is_super_admin: { Args: never; Returns: boolean }
       requesting_user_id: { Args: never; Returns: string }
       soft_delete_client: { Args: { p_client_id: string }; Returns: undefined }
       soft_delete_product: {
@@ -465,6 +643,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       metodo_pagamento: [

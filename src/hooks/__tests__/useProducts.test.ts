@@ -5,21 +5,30 @@ import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockProducts = [
-  { id: 'abc-1', name: 'Batom Matte', category: 'Lábios', price: 39.90, cost: 14, stock: 24, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 'abc-2', name: 'Base Líquida', category: 'Rosto', price: 79.90, cost: null, stock: 12, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'abc-1', establishment_id: 'est-1', name: 'Batom Matte', category: 'Lábios', price: 39.90, cost: 14, stock: 24, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'abc-2', establishment_id: 'est-1', name: 'Base Líquida', category: 'Rosto', price: 79.90, cost: null, stock: 12, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
 ]
 
-const mockInsert = vi.fn().mockReturnValue({
-  select: () => ({
-    single: () => Promise.resolve({ data: { id: 'new-1', ...mockProducts[0] }, error: null }),
-  }),
-})
+const mockInsert = vi.fn().mockResolvedValue({ error: null })
 
 const mockUpdate = vi.fn().mockReturnValue({
   eq: () => Promise.resolve({ error: null }),
 })
 
 const mockRpc = vi.fn().mockResolvedValue({ error: null })
+const mockProductsDisplayQuery = {
+  eq: vi.fn(),
+  order: vi.fn().mockResolvedValue({ data: mockProducts, error: null }),
+}
+mockProductsDisplayQuery.eq.mockReturnValue(mockProductsDisplayQuery)
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isSuperAdmin: false,
+    selectedEstablishmentId: null,
+    profile: { id: 'u1', establishmentId: 'est-1', fullName: 'Admin Local', role: 'admin', createdAt: '', updatedAt: '' },
+  }),
+}))
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -31,11 +40,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         }
       }
       return {
-        select: () => ({
-          eq: () => ({
-            order: () => Promise.resolve({ data: mockProducts, error: null }),
-          }),
-        }),
+        select: () => mockProductsDisplayQuery,
       }
     },
     rpc: mockRpc,
@@ -99,6 +104,7 @@ describe('useCreateProduct', () => {
     })
 
     expect(mockInsert).toHaveBeenCalledWith({
+      establishment_id: 'est-1',
       name: 'Novo Produto',
       category: 'Rosto',
       price: 49.90,

@@ -7,8 +7,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 const todayISO = new Date().toISOString().slice(0, 10)
 
 const mockSales = [
-  { id: 's1', client_id: 'c1', payment_method: 'Pix', total: 189.70, items_count: 3, created_by: null, refunded_at: null, created_at: `${todayISO}T19:40:00Z` },
-  { id: 's2', client_id: null, payment_method: 'Dinheiro', total: 29.90, items_count: 1, created_by: null, refunded_at: null, created_at: '2026-07-19T17:22:00Z' },
+  { id: 's1', establishment_id: 'est-1', client_id: 'c1', payment_method: 'Pix', total: 189.70, items_count: 3, created_by: null, refunded_at: null, created_at: `${todayISO}T19:40:00Z` },
+  { id: 's2', establishment_id: 'est-1', client_id: null, payment_method: 'Dinheiro', total: 29.90, items_count: 1, created_by: null, refunded_at: null, created_at: '2026-07-19T17:22:00Z' },
 ]
 
 const mockRpc = vi.fn().mockImplementation((fn: string) => {
@@ -16,15 +16,27 @@ const mockRpc = vi.fn().mockImplementation((fn: string) => {
   if (fn === 'cancel_sale') return Promise.resolve({ data: null, error: null })
   return Promise.resolve({ data: null, error: null })
 })
+const mockSalesQuery = {
+  is: vi.fn(),
+  order: vi.fn(),
+  eq: vi.fn(),
+}
+mockSalesQuery.is.mockReturnValue(mockSalesQuery)
+mockSalesQuery.eq.mockReturnValue(mockSalesQuery)
+mockSalesQuery.order.mockResolvedValue({ data: mockSales, error: null })
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isSuperAdmin: false,
+    selectedEstablishmentId: null,
+    profile: { id: 'u1', establishmentId: 'est-1', fullName: 'Admin Local', role: 'admin', createdAt: '', updatedAt: '' },
+  }),
+}))
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({
-        is: () => ({
-          order: () => Promise.resolve({ data: mockSales, error: null }),
-        }),
-      }),
+      select: () => mockSalesQuery,
     }),
     rpc: mockRpc,
   },
@@ -71,6 +83,7 @@ describe('useCreateSale', () => {
 
     expect(mockRpc).toHaveBeenCalledWith('create_sale', expect.objectContaining({
       p_client_id: 'c1',
+      p_establishment_id: 'est-1',
       p_payment_method: 'Pix',
     }))
   })

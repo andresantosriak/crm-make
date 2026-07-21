@@ -3,16 +3,25 @@ import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import type { Product } from '@/types'
 import { toProduct } from '@/lib/mappers'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useProducts() {
+  const { isSuperAdmin, selectedEstablishmentId, profile } = useAuth()
+  const establishmentId = isSuperAdmin ? selectedEstablishmentId : profile?.establishmentId ?? null
+
   return useQuery({
-    queryKey: ['products'],
+    queryKey: ['products', establishmentId ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('products_display')
         .select('*')
         .eq('active', true)
-        .order('name')
+
+      if (establishmentId) {
+        query = query.eq('establishment_id', establishmentId)
+      }
+
+      const { data, error } = await query.order('name')
 
       if (error) throw error
       return (data as Record<string, unknown>[]).map(toProduct)
@@ -22,6 +31,8 @@ export function useProducts() {
 
 export function useCreateProduct() {
   const queryClient = useQueryClient()
+  const { isSuperAdmin, selectedEstablishmentId, profile } = useAuth()
+  const establishmentId = isSuperAdmin ? selectedEstablishmentId : profile?.establishmentId ?? null
 
   return useMutation({
     mutationFn: async (input: {
@@ -31,9 +42,13 @@ export function useCreateProduct() {
       cost: number
       stock: number
     }) => {
+      if (!establishmentId) {
+        throw new Error('Selecione um estabelecimento antes de cadastrar produto')
+      }
+
       const { error } = await supabase
         .from('products')
-        .insert(input)
+        .insert({ ...input, establishment_id: establishmentId })
 
       if (error) throw error
     },

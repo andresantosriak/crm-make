@@ -119,6 +119,7 @@ describe('Application types — Product.cost is nullable (view masking)', () => 
   it('should allow null cost for employee view', () => {
     const product: import('@/types').Product = {
       id: 'test',
+      establishmentId: 'est-1',
       name: 'Test',
       category: 'Rosto',
       price: 10,

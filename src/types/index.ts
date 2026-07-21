@@ -1,13 +1,25 @@
 export interface Profile {
   id: string
+  establishmentId: string | null
   fullName: string
-  role: 'admin' | 'employee'
+  role: 'super_admin' | 'admin' | 'employee'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Establishment {
+  id: string
+  name: string
+  slug: string
+  active: boolean
+  createdBy: string | null
   createdAt: string
   updatedAt: string
 }
 
 export interface Product {
   id: string
+  establishmentId: string
   name: string
   category: 'Lábios' | 'Rosto' | 'Olhos'
   price: number
@@ -21,6 +33,7 @@ export interface Product {
 
 export interface Client {
   id: string
+  establishmentId: string
   name: string
   phone: string | null
   birthday: string | null
@@ -36,6 +49,7 @@ export type PaymentMethod = 'Pix' | 'Cartão de crédito' | 'Cartão de débito'
 
 export interface Sale {
   id: string
+  establishmentId: string
   clientId: string | null
   paymentMethod: PaymentMethod
   total: number
@@ -47,6 +61,7 @@ export interface Sale {
 
 export interface SaleItem {
   id: string
+  establishmentId: string
   saleId: string
   productId: string
   quantity: number

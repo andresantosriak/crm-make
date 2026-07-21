@@ -2,15 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { toProfile } from '@/lib/mappers'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useUsers() {
+  const { isSuperAdmin, selectedEstablishmentId } = useAuth()
+
   return useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', selectedEstablishmentId ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: true })
+
+      if (isSuperAdmin && selectedEstablishmentId) {
+        query = query.eq('establishment_id', selectedEstablishmentId)
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       return (data as Record<string, unknown>[]).map(toProfile)
@@ -22,7 +31,13 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (input: { email: string; full_name: string; role: 'admin' | 'employee'; password: string }) => {
+    mutationFn: async (input: {
+      email: string
+      full_name: string
+      role: 'admin' | 'employee'
+      password: string
+      establishment_id?: string | null
+    }) => {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: input,
       })
@@ -30,7 +45,13 @@ export function useCreateUser() {
       if (error) throw new Error('Erro ao criar usuário')
       if (data?.error) throw new Error(data.error)
 
-      return data.user as { id: string; email: string; full_name: string; role: string }
+      return data.user as {
+        id: string
+        email: string
+        full_name: string
+        role: string
+        establishment_id: string | null
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })

@@ -1,11 +1,18 @@
 import { ChevronRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useEstablishments } from '@/hooks/useEstablishments'
 import { getInitials } from '@/lib/utils'
 
 export function ProfileCard() {
-  const { profile, isAdmin } = useAuth()
+  const { profile, isAdmin, isSuperAdmin, selectedEstablishmentId } = useAuth()
+  const { data: establishments = [] } = useEstablishments()
   const name = profile?.fullName || 'Usuário'
   const initials = getInitials(name)
+  const establishmentName = establishments.find((item) => item.id === selectedEstablishmentId)?.name
+  const roleLabel = isSuperAdmin ? 'Admin geral' : isAdmin ? 'Admin local' : 'Funcionário'
+  const storeLabel = isSuperAdmin
+    ? establishmentName ?? 'Todos os estabelecimentos'
+    : establishmentName ?? 'Studio Bell PG'
 
   return (
     <div
@@ -25,9 +32,9 @@ export function ProfileCard() {
         {initials}
       </div>
       <div className="flex-1">
-        <p className="text-[16px] font-medium text-text-primary">Studio Bell PG · Make</p>
+        <p className="text-[16px] font-medium text-text-primary">{storeLabel} · Make</p>
         <p className="text-[13px] text-text-secondary">
-          {name} · {isAdmin ? 'Admin' : 'Funcionário'}
+          {name} · {roleLabel}
         </p>
       </div>
       <ChevronRight size={18} strokeWidth={1.8} className="text-text-muted" />

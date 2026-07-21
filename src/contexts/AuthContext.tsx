@@ -9,6 +9,9 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   isAdmin: boolean
+  isSuperAdmin: boolean
+  selectedEstablishmentId: string | null
+  setSelectedEstablishmentId: (establishmentId: string | null) => void
   isLoading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
@@ -19,6 +22,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   isAdmin: false,
+  isSuperAdmin: false,
+  selectedEstablishmentId: null,
+  setSelectedEstablishmentId: () => {},
   isLoading: true,
   signIn: async () => ({ error: null }),
   signOut: async () => {},
@@ -28,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [selectedEstablishmentId, setSelectedEstablishmentIdState] = useState<string | null>(() => (
+    window.localStorage.getItem('crm:selected-establishment-id') || null
+  ))
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchProfile = useCallback(async (userId: string) => {
@@ -88,12 +97,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null)
     setUser(null)
     setProfile(null)
+    setSelectedEstablishmentIdState(null)
+    window.localStorage.removeItem('crm:selected-establishment-id')
   }, [])
 
-  const isAdmin = user?.app_metadata?.role === 'admin'
+  const role = profile?.role ?? user?.app_metadata?.role
+  const isSuperAdmin = role === 'super_admin'
+  const isAdmin = role === 'super_admin' || role === 'admin'
+
+  const setSelectedEstablishmentId = useCallback((establishmentId: string | null) => {
+    setSelectedEstablishmentIdState(establishmentId)
+    if (establishmentId) {
+      window.localStorage.setItem('crm:selected-establishment-id', establishmentId)
+    } else {
+      window.localStorage.removeItem('crm:selected-establishment-id')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!profile) return
+    if (profile.role !== 'super_admin') {
+      setSelectedEstablishmentId(profile.establishmentId)
+    }
+  }, [profile, setSelectedEstablishmentId])
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, isAdmin, isLoading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        session,
+        user,
+        profile,
+        isAdmin,
+        isSuperAdmin,
+        selectedEstablishmentId,
+        setSelectedEstablishmentId,
+        isLoading,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

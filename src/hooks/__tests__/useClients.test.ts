@@ -5,8 +5,8 @@ import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockClients = [
-  { id: 'c1', name: 'Patrícia Souza', phone: '(42) 99234-5678', birthday: '1988-03-15', active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 'c2', name: 'Juliana Costa', phone: null, birthday: null, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'c1', establishment_id: 'est-1', name: 'Patrícia Souza', phone: '(42) 99234-5678', birthday: '1988-03-15', active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'c2', establishment_id: 'est-1', name: 'Juliana Costa', phone: null, birthday: null, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
 ]
 
 const mockSalesForClients = [
@@ -18,31 +18,46 @@ const mockSalesForClients = [
 const mockInsert = vi.fn().mockReturnValue({
   select: () => ({
     single: () => Promise.resolve({
-      data: { id: 'new-c', name: 'Nova Cliente', phone: null, birthday: null, active: true, created_by: null, created_at: '2026-07-20', updated_at: '2026-07-20' },
+      data: { id: 'new-c', establishment_id: 'est-1', name: 'Nova Cliente', phone: null, birthday: null, active: true, created_by: null, created_at: '2026-07-20', updated_at: '2026-07-20' },
       error: null,
     }),
   }),
 })
 
 const mockRpc = vi.fn().mockResolvedValue({ error: null })
+const mockClientsQuery = {
+  eq: vi.fn(),
+  order: vi.fn().mockResolvedValue({ data: mockClients, error: null }),
+}
+mockClientsQuery.eq.mockReturnValue(mockClientsQuery)
+const mockSalesQuery = {
+  is: vi.fn(),
+  eq: vi.fn(),
+  data: mockSalesForClients,
+  error: null,
+}
+mockSalesQuery.is.mockReturnValue(mockSalesQuery)
+mockSalesQuery.eq.mockReturnValue(mockSalesQuery)
+
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isSuperAdmin: false,
+    selectedEstablishmentId: null,
+    profile: { id: 'u1', establishmentId: 'est-1', fullName: 'Admin Local', role: 'admin', createdAt: '', updatedAt: '' },
+  }),
+}))
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: (table: string) => {
       if (table === 'clients') {
         return {
-          select: () => ({
-            eq: () => ({
-              order: () => Promise.resolve({ data: mockClients, error: null }),
-            }),
-          }),
+          select: () => mockClientsQuery,
           insert: mockInsert,
         }
       }
       return {
-        select: () => ({
-          is: () => Promise.resolve({ data: mockSalesForClients, error: null }),
-        }),
+        select: () => mockSalesQuery,
       }
     },
     rpc: mockRpc,
@@ -89,7 +104,7 @@ describe('useCreateClient', () => {
 
     await result.current.mutateAsync({ name: 'Nova Cliente', phone: null })
 
-    expect(mockInsert).toHaveBeenCalledWith({ name: 'Nova Cliente', phone: null, birthday: null })
+    expect(mockInsert).toHaveBeenCalledWith({ establishment_id: 'est-1', name: 'Nova Cliente', phone: null, birthday: null })
   })
 })
 

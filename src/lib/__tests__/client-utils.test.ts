@@ -5,6 +5,7 @@ import type { Client } from '@/types'
 const mockClients: Client[] = [
   {
     id: 'c1',
+    establishmentId: 'est-1',
     name: 'Mariana Alves',
     phone: null,
     birthday: null,
@@ -15,6 +16,7 @@ const mockClients: Client[] = [
   },
   {
     id: 'c2',
+    establishmentId: 'est-1',
     name: 'Patrícia Souza',
     phone: null,
     birthday: null,

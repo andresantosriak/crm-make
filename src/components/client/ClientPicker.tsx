@@ -40,6 +40,7 @@ export function ClientPicker({ open, onClose }: ClientPickerProps) {
         onSuccess: (data) => {
           const created: Client = {
             id: data.id,
+            establishmentId: data.establishment_id,
             name: data.name,
             phone: data.phone ?? null,
             birthday: data.birthday ?? null,

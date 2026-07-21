@@ -102,7 +102,7 @@ describe('CartContext', () => {
     act(() => result.current.addItem('1'))
     act(() =>
       result.current.setClient({
-        id: '2', name: 'Patrícia Souza', phone: null, birthday: null,
+        id: '2', establishmentId: 'est-1', name: 'Patrícia Souza', phone: null, birthday: null,
         active: true, createdBy: null, createdAt: '', updatedAt: '',
       }),
     )

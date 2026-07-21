@@ -42,11 +42,11 @@ Deno.serve(async (req) => {
 
     const { data: callerProfile, error: profileError } = await adminClient
       .from("profiles")
-      .select("role")
+      .select("role, establishment_id")
       .eq("id", caller.id)
       .single()
 
-    if (profileError || callerProfile?.role !== "admin") {
+    if (profileError || !["super_admin", "admin"].includes(callerProfile?.role ?? "")) {
       return new Response(
         JSON.stringify({ error: "Apenas administradores podem criar usuários" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -54,11 +54,12 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { email, full_name, role, password } = body as {
+    const { email, full_name, role, password, establishment_id } = body as {
       email?: string
       full_name?: string
       role?: string
       password?: string
+      establishment_id?: string | null
     }
 
     if (!email || !full_name || !role || !password) {
@@ -90,6 +91,38 @@ Deno.serve(async (req) => {
       )
     }
 
+    let targetEstablishmentId = establishment_id ?? null
+
+    if (callerProfile.role === "admin") {
+      if (role !== "employee") {
+        return new Response(
+          JSON.stringify({ error: "Admin local só pode criar funcionários" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        )
+      }
+      targetEstablishmentId = callerProfile.establishment_id
+    }
+
+    if (!targetEstablishmentId) {
+      return new Response(
+        JSON.stringify({ error: "Estabelecimento obrigatório" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      )
+    }
+
+    const { data: establishment, error: establishmentError } = await adminClient
+      .from("establishments")
+      .select("id, active")
+      .eq("id", targetEstablishmentId)
+      .single()
+
+    if (establishmentError || !establishment?.active) {
+      return new Response(
+        JSON.stringify({ error: "Estabelecimento inválido ou inativo" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      )
+    }
+
     const { data, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -97,6 +130,7 @@ Deno.serve(async (req) => {
       user_metadata: {
         full_name,
         role,
+        establishment_id: targetEstablishmentId,
       },
     })
 
@@ -115,6 +149,7 @@ Deno.serve(async (req) => {
           email: data.user.email,
           full_name,
           role,
+          establishment_id: targetEstablishmentId,
         },
       }),
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },

@@ -2,14 +2,24 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { toStoreSettings } from '@/lib/mappers'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useStoreSettings() {
+  const { isSuperAdmin, selectedEstablishmentId, profile } = useAuth()
+  const establishmentId = isSuperAdmin ? selectedEstablishmentId : profile?.establishmentId ?? null
+
   return useQuery({
-    queryKey: ['store_settings'],
+    queryKey: ['store_settings', establishmentId],
+    enabled: !!establishmentId,
     queryFn: async () => {
+      if (!establishmentId) {
+        throw new Error('Selecione um estabelecimento antes de carregar configurações')
+      }
+
       const { data, error } = await supabase
         .from('store_settings')
         .select('*')
+        .eq('establishment_id', establishmentId)
         .single()
 
       if (error) throw error
@@ -20,6 +30,8 @@ export function useStoreSettings() {
 
 export function useUpdateSettings() {
   const queryClient = useQueryClient()
+  const { isSuperAdmin, selectedEstablishmentId, profile } = useAuth()
+  const establishmentId = isSuperAdmin ? selectedEstablishmentId : profile?.establishmentId ?? null
 
   return useMutation({
     mutationFn: async (updates: Partial<{
@@ -32,10 +44,14 @@ export function useUpdateSettings() {
       toggle_aniversario: boolean
       toggle_resumo: boolean
     }>) => {
+      if (!establishmentId) {
+        throw new Error('Selecione um estabelecimento antes de salvar configurações')
+      }
+
       const { error } = await supabase
         .from('store_settings')
         .update(updates)
-        .eq('id', 1)
+        .eq('establishment_id', establishmentId)
 
       if (error) throw error
     },

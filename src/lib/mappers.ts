@@ -1,10 +1,23 @@
-import type { Profile, Product, Client, Sale, SaleItem, StoreSettings } from '@/types'
+import type { Profile, Establishment, Product, Client, Sale, SaleItem, StoreSettings } from '@/types'
 
 export function toProfile(row: Record<string, unknown>): Profile {
   return {
     id: row.id as string,
+    establishmentId: (row.establishment_id as string) ?? null,
     fullName: row.full_name as string,
-    role: row.role as 'admin' | 'employee',
+    role: row.role as 'super_admin' | 'admin' | 'employee',
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }
+}
+
+export function toEstablishment(row: Record<string, unknown>): Establishment {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    slug: row.slug as string,
+    active: row.active as boolean,
+    createdBy: (row.created_by as string) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   }
@@ -13,6 +26,7 @@ export function toProfile(row: Record<string, unknown>): Profile {
 export function toProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
+    establishmentId: row.establishment_id as string,
     name: row.name as string,
     category: row.category as 'Lábios' | 'Rosto' | 'Olhos',
     price: Number(row.price),
@@ -28,6 +42,7 @@ export function toProduct(row: Record<string, unknown>): Product {
 export function toClient(row: Record<string, unknown>): Client {
   return {
     id: row.id as string,
+    establishmentId: row.establishment_id as string,
     name: row.name as string,
     phone: (row.phone as string) ?? null,
     birthday: (row.birthday as string) ?? null,
@@ -43,6 +58,7 @@ export function toClient(row: Record<string, unknown>): Client {
 export function toSale(row: Record<string, unknown>): Sale {
   return {
     id: row.id as string,
+    establishmentId: row.establishment_id as string,
     clientId: (row.client_id as string) ?? null,
     paymentMethod: row.payment_method as Sale['paymentMethod'],
     total: Number(row.total),
@@ -56,6 +72,7 @@ export function toSale(row: Record<string, unknown>): Sale {
 export function toSaleItem(row: Record<string, unknown>): SaleItem {
   return {
     id: row.id as string,
+    establishmentId: row.establishment_id as string,
     saleId: row.sale_id as string,
     productId: row.product_id as string,
     quantity: Number(row.quantity),

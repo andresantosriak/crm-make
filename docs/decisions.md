@@ -1,5 +1,10 @@
 # Decisões — CRM Studio Bellê (crm-make)
 
+### [2026-07-21] Fase 3 — André como admin geral multi-estabelecimento
+**Contexto:** Usuário confirmou que André deve visualizar tudo e criar contas para outros estabelecimentos, cada um com estoque, produtos, clientes e histórico próprios.
+**Decisão:** `profiles.role` agora aceita `super_admin`, `admin` e `employee`. André (`andresantos.riak@gmail.com`) é o único `super_admin` e fica sem `establishment_id`. Todos os demais usuários têm `establishment_id` obrigatório. Produtos, clientes, vendas, itens da venda e configurações são isolados por estabelecimento. O super admin vê todos os estabelecimentos e pode filtrar no frontend; admin local e funcionário operam apenas o próprio estabelecimento.
+**Escopo:** RLS, Auth Hook, Edge Function `create-user`, tela `/usuarios`, seletor global de estabelecimento, hooks de dados e migrations Fase 3.
+
 ### [2026-07-21] Senha do admin respeita política de mínimo 8
 **Contexto:** Usuário pediu senha `123456` (6 chars), mas a política de auth configurada exige mínimo 8 — Supabase rejeita (weak_password) até via Admin API. O agente que provisionou o admin gerou senha aleatória em silêncio, causando falha de login não diagnosticada.
 **Decisão:** Senha admin de desenvolvimento com 8 dígitos (respeita a política). Valor real só em `.env.local`. Sempre que o usuário pedir senha curta, avisar do conflito com a política em vez de gerar alternativa em silêncio.

@@ -10,14 +10,27 @@ const mockSettings = {
   toggle_aniversario: true, toggle_resumo: false, updated_at: '',
 }
 
+const mockSettingsQuery = {
+  eq: vi.fn(),
+  single: vi.fn().mockResolvedValue({ data: mockSettings, error: null }),
+}
+mockSettingsQuery.eq.mockReturnValue(mockSettingsQuery)
 const mockUpdate = vi.fn().mockReturnValue({
   eq: () => Promise.resolve({ error: null }),
 })
 
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isSuperAdmin: false,
+    selectedEstablishmentId: null,
+    profile: { id: 'u1', establishmentId: 'est-1', fullName: 'Admin Local', role: 'admin', createdAt: '', updatedAt: '' },
+  }),
+}))
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     from: () => ({
-      select: () => ({ single: () => Promise.resolve({ data: mockSettings, error: null }) }),
+      select: () => mockSettingsQuery,
       update: mockUpdate,
     }),
   },
