@@ -28,7 +28,7 @@ const mockSales = [
   { id: 's3', client_id: 'c2', payment_method: 'Pix', total: 80, items_count: 3, created_by: null, refunded_at: null, created_at: '2026-01-01T20:00:00Z' },
 ]
 
-const mockSettings = { id: 1, default_markup: 180, low_stock_threshold: 5, vip_threshold: 500, birthday_alert_days: 7, toggle_promos: true, toggle_estoque: true, toggle_aniversario: true, toggle_resumo: false, updated_at: '' }
+const mockSettings = { id: 1, default_markup: 180, monthly_sales_goal: 10000, low_stock_threshold: 5, vip_threshold: 500, birthday_alert_days: 7, toggle_promos: true, toggle_estoque: true, toggle_aniversario: true, toggle_resumo: false, updated_at: '' }
 
 function makeSalesIs() {
   const resolved = Promise.resolve({ data: mockSalesForClients, error: null })

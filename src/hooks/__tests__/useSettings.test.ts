@@ -5,7 +5,7 @@ import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockSettings = {
-  id: 1, default_markup: 180, low_stock_threshold: 5, vip_threshold: 500,
+  id: 1, default_markup: 180, monthly_sales_goal: 10000, low_stock_threshold: 5, vip_threshold: 500,
   birthday_alert_days: 7, toggle_promos: true, toggle_estoque: true,
   toggle_aniversario: true, toggle_resumo: false, updated_at: '',
 }
@@ -50,6 +50,12 @@ describe('useSettings (facade)', () => {
     await waitFor(() => expect(result.current.defaultMarkup).toBe(180))
   })
 
+  it('should return monthlySalesGoal from store_settings', async () => {
+    const { useSettings } = await import('../useSettings')
+    const { result } = renderHook(() => useSettings(), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.monthlySalesGoal).toBe(10000))
+  })
+
   it('should return toggles from store_settings', async () => {
     const { useSettings } = await import('../useSettings')
     const { result } = renderHook(() => useSettings(), { wrapper: createWrapper() })
@@ -78,6 +84,17 @@ describe('useSettings (facade)', () => {
     act(() => result.current.setMarkup(193))
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ default_markup: 190 }))
+  })
+
+  it('should call supabase update when setMonthlySalesGoal is called', async () => {
+    mockUpdate.mockClear()
+    const { useSettings } = await import('../useSettings')
+    const { result } = renderHook(() => useSettings(), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.monthlySalesGoal).toBe(10000))
+
+    act(() => result.current.setMonthlySalesGoal(12500.456))
+
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ monthly_sales_goal: 12500.46 }))
   })
 
   it('should call supabase update when toggleSetting is called', async () => {

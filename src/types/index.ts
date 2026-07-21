@@ -73,6 +73,7 @@ export interface SaleItem {
 export interface StoreSettings {
   id: number
   defaultMarkup: number
+  monthlySalesGoal: number
   lowStockThreshold: number
   vipThreshold: number
   birthdayAlertDays: number

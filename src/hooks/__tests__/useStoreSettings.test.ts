@@ -5,7 +5,7 @@ import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockSettings = {
-  id: 1, default_markup: 180, low_stock_threshold: 5, vip_threshold: 500,
+  id: 1, default_markup: 180, monthly_sales_goal: 10000, low_stock_threshold: 5, vip_threshold: 500,
   birthday_alert_days: 7, toggle_promos: true, toggle_estoque: true,
   toggle_aniversario: true, toggle_resumo: false, updated_at: '2026-07-20T00:00:00Z',
 }
@@ -51,6 +51,7 @@ describe('useStoreSettings', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     expect(result.current.data?.defaultMarkup).toBe(180)
+    expect(result.current.data?.monthlySalesGoal).toBe(10000)
     expect(result.current.data?.lowStockThreshold).toBe(5)
     expect(result.current.data?.vipThreshold).toBe(500)
     expect(result.current.data?.birthdayAlertDays).toBe(7)
@@ -75,8 +76,8 @@ describe('useUpdateSettings', () => {
     const { useUpdateSettings } = await import('../useStoreSettings')
     const { result } = renderHook(() => useUpdateSettings(), { wrapper: createWrapper() })
 
-    result.current.mutate({ default_markup: 200 })
+    result.current.mutate({ default_markup: 200, monthly_sales_goal: 12000 })
 
-    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ default_markup: 200 }))
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({ default_markup: 200, monthly_sales_goal: 12000 }))
   })
 })

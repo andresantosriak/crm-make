@@ -55,6 +55,11 @@
 **Decisão:** Aceito hardcoded no MVP; recalcular quando houver backend.
 **Escopo:** Dashboard e Histórico.
 
+### [2026-07-21] Meta mensal configurável por estabelecimento
+**Contexto:** Com Supabase e multiestabelecimento ativos, o percentual fixo "68%" deixou de ter fonte real e gerava leitura enganosa no Dashboard.
+**Decisão:** `store_settings.monthly_sales_goal` passa a armazenar a meta mensal de cada estabelecimento. Admin configura em `Configurações > Metas`; Dashboard calcula `vendas_do_mes / monthly_sales_goal`. Sem meta configurada, a UI mostra "Sem meta".
+**Escopo:** `store_settings`, `StatsCards`, `SettingsPage`, `useSettings`, `useStoreSettings`.
+
 ### [2026-07-20] Pendências técnicas registradas (não-bloqueantes)
 **Contexto:** Reviews e QA aprovaram com ressalvas de baixa severidade.
 **Decisão:** Registrar para fase 2, sem corrigir agora: formatCurrency sem separador de milhar; `key={index}` em listas de clientes (Client sem id); ClientPicker cria objeto Client duplicado; AlertsPage/PromosPage importam mock direto de `src/data/`; busca não é accent-insensitive (normalize('NFD') pós-MVP).

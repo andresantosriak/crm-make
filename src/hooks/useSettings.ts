@@ -14,11 +14,17 @@ export function useSettings() {
   const updateSettings = useUpdateSettings()
 
   const defaultMarkup = settings?.defaultMarkup ?? 180
+  const monthlySalesGoal = settings?.monthlySalesGoal ?? 0
 
   const setMarkup = useCallback((value: number) => {
     const clamped = Math.max(MARKUP_MIN, Math.min(MARKUP_MAX, value))
     const stepped = Math.round(clamped / MARKUP_STEP) * MARKUP_STEP
     updateSettings.mutate({ default_markup: stepped })
+  }, [updateSettings])
+
+  const setMonthlySalesGoal = useCallback((value: number) => {
+    const normalized = Number.isFinite(value) ? Math.max(0, Math.round(value * 100) / 100) : 0
+    updateSettings.mutate({ monthly_sales_goal: normalized })
   }, [updateSettings])
 
   const toggles: SettingsToggles = {
@@ -38,5 +44,5 @@ export function useSettings() {
     updateSettings.mutate({ [fieldMap[key]]: !toggles[key] })
   }, [toggles, updateSettings])
 
-  return { defaultMarkup, setMarkup, toggles, toggleSetting }
+  return { defaultMarkup, setMarkup, monthlySalesGoal, setMonthlySalesGoal, toggles, toggleSetting }
 }

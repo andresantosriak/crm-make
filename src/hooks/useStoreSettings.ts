@@ -36,6 +36,7 @@ export function useUpdateSettings() {
   return useMutation({
     mutationFn: async (updates: Partial<{
       default_markup: number
+      monthly_sales_goal: number
       low_stock_threshold: number
       vip_threshold: number
       birthday_alert_days: number

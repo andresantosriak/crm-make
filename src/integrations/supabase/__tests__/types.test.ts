@@ -90,6 +90,7 @@ describe('Supabase generated types — column types', () => {
     const keys: (keyof Row)[] = [
       'id',
       'default_markup',
+      'monthly_sales_goal',
       'low_stock_threshold',
       'vip_threshold',
       'birthday_alert_days',
@@ -99,7 +100,7 @@ describe('Supabase generated types — column types', () => {
       'toggle_resumo',
       'updated_at',
     ]
-    expect(keys).toHaveLength(10)
+    expect(keys).toHaveLength(11)
   })
 })
 

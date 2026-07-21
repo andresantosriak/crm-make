@@ -23,7 +23,7 @@ const mockClients = [
 ]
 
 const mockSettings = {
-  id: 1, default_markup: 180, low_stock_threshold: 5, vip_threshold: 500,
+  id: 1, default_markup: 180, monthly_sales_goal: 10000, low_stock_threshold: 5, vip_threshold: 500,
   birthday_alert_days: 7, toggle_promos: true, toggle_estoque: true,
   toggle_aniversario: true, toggle_resumo: false, updated_at: '',
 }

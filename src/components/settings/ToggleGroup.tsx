@@ -11,7 +11,8 @@ const toggleDefs = [
 
 export function ToggleGroup() {
   const { toggles, toggleSetting } = useSettings()
-  const { isAdmin } = useAuth()
+  const { isAdmin, isSuperAdmin, selectedEstablishmentId } = useAuth()
+  const canEdit = isAdmin && (!isSuperAdmin || !!selectedEstablishmentId)
 
   return (
     <div
@@ -24,14 +25,14 @@ export function ToggleGroup() {
           className="flex items-center justify-between px-4 py-[15px]"
           style={{
             borderBottom: '1px solid rgba(233,220,198,.06)',
-            opacity: isAdmin ? 1 : 0.5,
+            opacity: canEdit ? 1 : 0.5,
           }}
         >
           <span className="text-[14px] text-text-primary">{t.label}</span>
           <ToggleSwitch
             checked={toggles[t.key]}
-            onChange={isAdmin ? () => toggleSetting(t.key) : undefined}
-            disabled={!isAdmin}
+            onChange={canEdit ? () => toggleSetting(t.key) : undefined}
+            disabled={!canEdit}
           />
         </div>
       ))}

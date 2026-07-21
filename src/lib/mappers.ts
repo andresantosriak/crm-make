@@ -86,6 +86,7 @@ export function toStoreSettings(row: Record<string, unknown>): StoreSettings {
   return {
     id: Number(row.id),
     defaultMarkup: Number(row.default_markup),
+    monthlySalesGoal: Number(row.monthly_sales_goal ?? 0),
     lowStockThreshold: Number(row.low_stock_threshold),
     vipThreshold: Number(row.vip_threshold),
     birthdayAlertDays: Number(row.birthday_alert_days),

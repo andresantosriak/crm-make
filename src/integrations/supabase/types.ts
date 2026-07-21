@@ -375,6 +375,7 @@ export type Database = {
           establishment_id: string
           id: number
           low_stock_threshold: number
+          monthly_sales_goal: number
           toggle_aniversario: boolean
           toggle_estoque: boolean
           toggle_promos: boolean
@@ -388,6 +389,7 @@ export type Database = {
           establishment_id: string
           id?: number
           low_stock_threshold?: number
+          monthly_sales_goal?: number
           toggle_aniversario?: boolean
           toggle_estoque?: boolean
           toggle_promos?: boolean
@@ -401,6 +403,7 @@ export type Database = {
           establishment_id?: string
           id?: number
           low_stock_threshold?: number
+          monthly_sales_goal?: number
           toggle_aniversario?: boolean
           toggle_estoque?: boolean
           toggle_promos?: boolean
