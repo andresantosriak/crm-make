@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ShoppingBag, Plus, Pen, Users } from 'lucide-react'
+import { ShoppingBag, Plus, Sparkles, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 interface ActionItem {
@@ -12,7 +12,7 @@ interface ActionItem {
 const actions: ActionItem[] = [
   { icon: ShoppingBag, title: 'Nova venda', subtitle: 'Registrar pedido', path: '/vendas' },
   { icon: Plus, title: 'Novo produto', subtitle: 'Custo e margem', path: '/produto' },
-  { icon: Pen, title: 'Promoções', subtitle: 'Sugeridas pela IA', path: '/promos' },
+  { icon: Sparkles, title: 'Sophia IA', subtitle: 'Plano de ação', path: '/sophia' },
   { icon: Users, title: 'Clientes', subtitle: 'Fidelizar', path: '/clientes' },
 ]
 

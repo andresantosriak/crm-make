@@ -14,6 +14,7 @@ const NewProductPage = lazy(() => import('@/pages/NewProductPage'))
 const ClientsPage = lazy(() => import('@/pages/ClientsPage'))
 const AlertsPage = lazy(() => import('@/pages/AlertsPage'))
 const PromosPage = lazy(() => import('@/pages/PromosPage'))
+const SophiaPage = lazy(() => import('@/pages/SophiaPage'))
 const SettingsPage = lazy(() => import('@/pages/SettingsPage'))
 const UsersPage = lazy(() => import('@/pages/UsersPage'))
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/clientes" element={<ClientsPage />} />
               <Route path="/avisos" element={<AlertsPage />} />
               <Route path="/promos" element={<PromosPage />} />
+              <Route path="/sophia" element={<SophiaPage />} />
               <Route path="/config" element={<SettingsPage />} />
 
               <Route element={<AdminRoute />}>

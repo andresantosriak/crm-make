@@ -101,6 +101,91 @@ export interface Alert {
   when: string
 }
 
+export type AiInsightPriority = 'alta' | 'media' | 'baixa'
+
+export interface AiInsight {
+  id: string
+  kind: string
+  priority: AiInsightPriority
+  title: string
+  summary: string
+  rationale: string
+  actionLabel: string
+  actionRoute: string
+  confidence: number
+  marketingAngles: string[]
+  postIdeas: string[]
+  relatedProducts: string[]
+  relatedClients: string[]
+}
+
+export interface AiAutomationIdea {
+  area: string
+  trigger: string
+  action: string
+  value: string
+}
+
+export interface AiActionPlanItem {
+  id: string
+  priority: AiInsightPriority
+  area: string
+  title: string
+  why: string
+  nextStep: string
+  suggestedOwner: string
+  dueWindow: string
+  actionRoute: string
+}
+
+export interface AiContentIdea {
+  id: string
+  channel: 'Instagram' | 'WhatsApp' | 'Vitrine' | 'Equipe'
+  theme: string
+  format: string
+  hook: string
+  caption: string
+  cta: string
+  relatedProducts: string[]
+}
+
+export interface AiCustomerAction {
+  id: string
+  segment: string
+  clientNames: string[]
+  reason: string
+  message: string
+  actionRoute: string
+}
+
+export interface AiPerformanceSignal {
+  id: string
+  metric: string
+  status: 'bom' | 'atenção' | 'crítico'
+  summary: string
+  recommendation: string
+}
+
+export interface AiInsightsResponse {
+  source: 'openai' | 'rules'
+  model: string
+  generatedAt: string
+  summary: string
+  insights: AiInsight[]
+  automationIdeas: AiAutomationIdea[]
+  actionPlan: AiActionPlanItem[]
+  contentIdeas: AiContentIdea[]
+  customerActions: AiCustomerAction[]
+  performanceSignals: AiPerformanceSignal[]
+  metrics: {
+    establishments: number
+    products: number
+    clients: number
+    sales90d: number
+    averageTicket90d: number
+  }
+}
+
 export type PromoAction = 'publish' | 'edit' | 'whatsapp'
 
 export interface Promo {

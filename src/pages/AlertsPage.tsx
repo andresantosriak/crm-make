@@ -1,10 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { BackButton } from '@/components/shared/BackButton'
 import { useAlerts } from '@/hooks/useAlerts'
+import { useAiInsights } from '@/hooks/useAiInsights'
 
 export default function AlertsPage() {
   const navigate = useNavigate()
   const { alerts, isPending } = useAlerts()
+  const { data: aiData, isPending: aiPending } = useAiInsights()
+  const aiAlerts = aiData?.insights.slice(0, 4).map((insight) => ({
+    kind: `Sophia · ${insight.priority}`,
+    dot: insight.priority === 'alta' ? '#D07C67' : '#C8A24C',
+    text: insight.summary,
+    when: insight.title,
+  })) ?? []
+  const visibleAlerts = [...alerts.filter((alert) => alert.kind !== 'Sophia · IA'), ...aiAlerts]
 
   return (
     <div className="px-5 pt-1.5 animate-fadeup">
@@ -13,7 +22,7 @@ export default function AlertsPage() {
         <h1 className="font-display text-[28px] font-medium text-text-primary">Avisos</h1>
       </div>
 
-      {isPending ? (
+      {isPending || aiPending ? (
         <div className="flex justify-center py-10">
           <div
             className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
@@ -21,7 +30,7 @@ export default function AlertsPage() {
           />
         </div>
       ) : (
-        alerts.map((alert, index) => (
+        visibleAlerts.map((alert, index) => (
           <div
             key={index}
             className="mb-2.5 flex gap-[13px] rounded-card bg-card p-[15px]"
