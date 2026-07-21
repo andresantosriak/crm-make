@@ -33,7 +33,16 @@ Enquanto `OPENAI_API_KEY` não estiver configurada, a Sophia usa um fallback loc
 - Vendas dos últimos 90 dias: total, quantidade de itens, ticket médio, forma de pagamento e frequência.
 - Itens vendidos: produto, quantidade, subtotal e relação com venda.
 - Clientes ativos: aniversário, total comprado, última compra e frequência.
-- Configurações da unidade: estoque baixo, VIP, aniversário e markup padrão.
+- Configurações da unidade: estoque baixo, VIP, aniversário, markup padrão e meta mensal de vendas.
+
+## Funcionamento atual
+
+- **Reativa ao uso:** a Sophia roda quando o usuário abre Dashboard, Sophia, Promoções ou Avisos.
+- **Atualização manual:** o usuário pode clicar em atualizar nos cards da Sophia.
+- **Cache do app:** os insights ficam em cache por 5 minutos por estabelecimento selecionado.
+- **Sem cron nesta versão:** ela ainda não envia resumo diário sozinha nem cria campanhas automaticamente em segundo plano.
+- **Fallback local:** se a OpenAI falhar, a função retorna recomendações por regras usando os mesmos dados reais.
+- **Segurança:** a OpenAI roda apenas na Edge Function `ai-insights`; a chave não vai para o frontend.
 
 ## Entrega implementada
 
@@ -52,6 +61,12 @@ Enquanto `OPENAI_API_KEY` não estiver configurada, a Sophia usa um fallback loc
   - clientes para acionar;
   - ideias de marketing e conteúdo;
   - insights completos.
+- Meta mensal entrou no contexto da Sophia:
+  - faturamento do mês;
+  - meta mensal configurada;
+  - percentual atingido;
+  - valor faltante;
+  - ritmo diário necessário até o fim do mês.
 
 ### Contrato atual da IA
 
@@ -156,71 +171,76 @@ Enquanto `OPENAI_API_KEY` não estiver configurada, a Sophia usa um fallback loc
     - Ação: sugerir captura de cadastro no checkout.
     - Direção: criar base própria.
 
+18. **Meta mensal atrasada**
+    - Gatilho: percentual realizado abaixo do ritmo esperado para o dia do mês.
+    - Ação: sugerir campanha de 48h, lista de clientes, produto herói, vitrine e WhatsApp.
+    - Direção: transformar meta em plano comercial executável.
+
 ### Marketing e conteúdo
 
-18. **Post de produto parado**
+19. **Post de produto parado**
     - Gatilho: item com baixa saída.
     - Ação: roteiro de reels, story com enquete, antes/depois e combo.
     - Direção: gerar demanda.
 
-19. **Calendário editorial semanal**
+20. **Calendário editorial semanal**
     - Gatilho: início da semana ou ausência de campanha.
     - Ação: pauta de posts, stories, WhatsApp e vitrine.
     - Direção: manter consistência.
 
-20. **Campanha por categoria**
+21. **Campanha por categoria**
     - Gatilho: categoria com estoque alto, baixa saída ou boa margem.
     - Ação: criar narrativa e oferta da categoria.
     - Direção: marketing por coleção.
 
-21. **Branding da unidade**
+22. **Branding da unidade**
     - Gatilho: padrões de compra e produto herói.
     - Ação: sugerir posicionamento, tom de comunicação, promessa e pauta visual.
     - Direção: fortalecer marca local.
 
-22. **Copy para WhatsApp**
+23. **Copy para WhatsApp**
     - Gatilho: cliente inativo, aniversário, VIP ou produto de interesse.
     - Ação: gerar mensagem curta, humanizada e sem tom robótico.
     - Direção: aumentar resposta.
 
-23. **Vitrine e exposição**
+24. **Vitrine e exposição**
     - Gatilho: produto com estoque alto ou campanha sugerida.
     - Ação: sugerir montagem de bancada, destaque e kit.
     - Direção: conectar loja física e digital.
 
-24. **Campanha de data comercial**
+25. **Campanha de data comercial**
     - Gatilho: Dia das Mães, Black Friday, Natal, férias, volta às aulas etc.
     - Ação: sugerir kits, cronograma e posts.
     - Direção: antecipação comercial.
 
 ### Operação e gestão
 
-25. **Resumo diário automático**
+26. **Resumo diário automático**
     - Gatilho: fechamento do dia.
     - Ação: gerar resumo de vendas, estoque crítico, clientes para contato e campanha do dia seguinte.
     - Direção: rotina de gestão.
 
-26. **Resumo semanal**
+27. **Resumo semanal**
     - Gatilho: segunda-feira ou fechamento semanal.
     - Ação: análise de desempenho, produtos parados, melhores clientes e próximos passos.
     - Direção: planejamento.
 
-27. **Alerta para André**
+28. **Alerta para André**
     - Gatilho: problema crítico em qualquer estabelecimento.
     - Ação: destacar unidade, risco e ação recomendada.
     - Direção: visão global do super admin.
 
-28. **Comparativo entre unidades**
+29. **Comparativo entre unidades**
     - Gatilho: André em visão global.
     - Ação: comparar estoque, vendas, ticket, ruptura, reativação e campanhas.
     - Direção: replicar boas práticas.
 
-29. **Treinamento de equipe**
+30. **Treinamento de equipe**
     - Gatilho: padrão de baixa conversão ou produto esquecido.
     - Ação: sugerir script de atendimento e argumento de venda.
     - Direção: melhorar execução.
 
-30. **Checklist reativo**
+31. **Checklist reativo**
     - Gatilho: usuário abre dashboard ou promoções.
     - Ação: Sophia atualiza os próximos passos com base nos dados mais recentes.
     - Direção: app como assistente ativo.
@@ -233,3 +253,5 @@ Enquanto `OPENAI_API_KEY` não estiver configurada, a Sophia usa um fallback loc
 4. Permitir feedback do usuário para ajustar o tom da Sophia por estabelecimento.
 5. Adicionar agendamento diário/semanal por Edge Function cron.
 6. Gerar texto pronto para WhatsApp, Instagram e vitrine.
+7. Criar automações configuráveis por unidade: resumo diário, alerta de ruptura, reativação de cliente e plano semanal de conteúdo.
+8. Criar visão do André com ranking de unidades por meta, estoque crítico, clientes inativos e oportunidades de campanha.

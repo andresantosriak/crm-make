@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Target } from 'lucide-react'
-import { useSettings } from '@/hooks/useSettings'
+import { toast } from 'sonner'
+import { useStoreSettings, useUpdateSettings } from '@/hooks/useStoreSettings'
 import { formatCurrency } from '@/lib/utils'
 
 function parseCurrencyInput(value: string) {
@@ -10,8 +11,11 @@ function parseCurrencyInput(value: string) {
 }
 
 export function MonthlyGoalControl() {
-  const { monthlySalesGoal, setMonthlySalesGoal } = useSettings()
+  const { data: settings } = useStoreSettings()
+  const updateSettings = useUpdateSettings()
+  const monthlySalesGoal = settings?.monthlySalesGoal ?? 0
   const [goalInput, setGoalInput] = useState('')
+  const [savedFeedback, setSavedFeedback] = useState(false)
 
   useEffect(() => {
     setGoalInput(monthlySalesGoal > 0 ? String(monthlySalesGoal).replace('.', ',') : '')
@@ -23,7 +27,20 @@ export function MonthlyGoalControl() {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
     if (isInvalid) return
-    setMonthlySalesGoal(parsedGoal)
+
+    const normalized = Number.isFinite(parsedGoal)
+      ? Math.max(0, Math.round(parsedGoal * 100) / 100)
+      : 0
+
+    updateSettings.mutate(
+      { monthly_sales_goal: normalized },
+      {
+        onSuccess: () => {
+          setSavedFeedback(true)
+          toast.success('Meta mensal salva')
+        },
+      },
+    )
   }
 
   return (
@@ -50,7 +67,10 @@ export function MonthlyGoalControl() {
       <div className="mt-3 flex gap-2">
         <input
           value={goalInput}
-          onChange={(event) => setGoalInput(event.target.value)}
+          onChange={(event) => {
+            setGoalInput(event.target.value)
+            setSavedFeedback(false)
+          }}
           inputMode="decimal"
           placeholder="Ex: 10000,00"
           className="min-w-0 flex-1 rounded-[10px] bg-app-bg px-3.5 py-3 text-[14px] text-text-primary outline-none"
@@ -58,15 +78,24 @@ export function MonthlyGoalControl() {
         />
         <button
           type="submit"
+          disabled={isInvalid || updateSettings.isPending}
           className="rounded-[10px] border-none px-4 text-[13px] font-semibold cursor-pointer"
           style={{ background: 'linear-gradient(135deg, #d6b25c, #b78d3d)', color: '#1a1408' }}
         >
-          Salvar
+          {updateSettings.isPending ? 'Salvando...' : 'Salvar'}
         </button>
       </div>
 
       {isInvalid && (
         <p className="mt-2 text-[12px] text-danger">Informe um valor válido para a meta.</p>
+      )}
+      {savedFeedback && (
+        <p className="mt-2 text-[12px] text-success">Meta salva com sucesso.</p>
+      )}
+      {updateSettings.isError && (
+        <p className="mt-2 text-[12px] text-danger">
+          {updateSettings.error instanceof Error ? updateSettings.error.message : 'Erro ao salvar meta.'}
+        </p>
       )}
     </form>
   )

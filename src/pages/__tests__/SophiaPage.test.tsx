@@ -14,7 +14,18 @@ vi.mock('@/hooks/useAiInsights', () => ({
       model: 'gpt-5.6-luna',
       generatedAt: '2026-07-21T00:00:00Z',
       summary: 'Sophia encontrou oportunidades claras para estoque e marketing.',
-      metrics: { establishments: 1, products: 10, clients: 5, sales90d: 8, averageTicket90d: 122.88 },
+      metrics: {
+        establishments: 1,
+        products: 10,
+        clients: 5,
+        sales90d: 8,
+        averageTicket90d: 122.88,
+        monthRevenue: 420.6,
+        monthlySalesGoal: 1000,
+        monthlyGoalProgress: 0.4206,
+        monthlyGoalGap: 579.4,
+        requiredDailyRevenueToGoal: 52.67,
+      },
       actionPlan: [
         {
           id: 'a1',
@@ -95,5 +106,7 @@ describe('SophiaPage', () => {
     expect(screen.getByText('Clientes para acionar')).toBeInTheDocument()
     expect(screen.getByText('Marketing e conteúdo')).toBeInTheDocument()
     expect(screen.getByText('Repor Máscara Volume Extremo')).toBeInTheDocument()
+    expect(screen.getByText('Meta mês')).toBeInTheDocument()
+    expect(screen.getByText('42%')).toBeInTheDocument()
   })
 })

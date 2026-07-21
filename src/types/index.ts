@@ -184,6 +184,11 @@ export interface AiInsightsResponse {
     clients: number
     sales90d: number
     averageTicket90d: number
+    monthRevenue: number
+    monthlySalesGoal: number
+    monthlyGoalProgress: number | null
+    monthlyGoalGap: number
+    requiredDailyRevenueToGoal: number
   }
 }
 

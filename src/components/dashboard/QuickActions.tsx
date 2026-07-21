@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ShoppingBag, Plus, Sparkles, Users } from 'lucide-react'
+import { Bell, Megaphone, Plus, ShoppingBag, Sparkles, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 interface ActionItem {
@@ -14,6 +14,8 @@ const actions: ActionItem[] = [
   { icon: Plus, title: 'Novo produto', subtitle: 'Custo e margem', path: '/produto' },
   { icon: Sparkles, title: 'Sophia IA', subtitle: 'Plano de ação', path: '/sophia' },
   { icon: Users, title: 'Clientes', subtitle: 'Fidelizar', path: '/clientes' },
+  { icon: Megaphone, title: 'Promoções', subtitle: 'Campanhas IA', path: '/promos' },
+  { icon: Bell, title: 'Avisos', subtitle: 'Alertas ativos', path: '/avisos' },
 ]
 
 export function QuickActions() {

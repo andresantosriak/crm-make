@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import { BackButton } from '@/components/shared/BackButton'
 import { AiInsightCard } from '@/components/ai/AiInsightCard'
 import { useAiInsights } from '@/hooks/useAiInsights'
+import { formatCurrency } from '@/lib/utils'
 import type { AiInsightPriority, AiPerformanceSignal } from '@/types'
 
 const priorityColor: Record<AiInsightPriority, string> = {
@@ -21,6 +22,8 @@ const signalColor: Record<AiPerformanceSignal['status'], string> = {
 export default function SophiaPage() {
   const navigate = useNavigate()
   const { data, isPending, isError, refetch, isFetching } = useAiInsights()
+  const monthlyProgress = data?.metrics.monthlyGoalProgress
+  const hasMonthlyGoal = (data?.metrics.monthlySalesGoal ?? 0) > 0
 
   return (
     <div className="px-5 pt-1.5 animate-fadeup">
@@ -60,7 +63,15 @@ export default function SophiaPage() {
               <Metric label="Produtos" value={data.metrics.products} />
               <Metric label="Clientes" value={data.metrics.clients} />
               <Metric label="Vendas 90d" value={data.metrics.sales90d} />
-              <Metric label="Ticket" value={`R$ ${data.metrics.averageTicket90d.toFixed(0)}`} />
+              <Metric label="Ticket" value={formatCurrency(data.metrics.averageTicket90d)} />
+              <Metric
+                label="Meta mês"
+                value={hasMonthlyGoal && monthlyProgress !== null && monthlyProgress !== undefined ? `${Math.round(monthlyProgress * 100)}%` : 'Sem meta'}
+              />
+              <Metric
+                label="Falta"
+                value={hasMonthlyGoal ? formatCurrency(data.metrics.monthlyGoalGap) : 'Configurar'}
+              />
             </div>
           </section>
 

@@ -47,6 +47,7 @@ interface StoreSettingsRow {
   vip_threshold: number
   birthday_alert_days: number
   default_markup: number
+  monthly_sales_goal: number
 }
 
 interface AiInsight {
@@ -320,6 +321,29 @@ function safeNumber(value: unknown) {
   return Number.isFinite(Number(value)) ? Number(value) : 0
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value)
+}
+
+function getCurrentMonthContext(now = new Date()) {
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const currentDay = now.getDate()
+
+  return {
+    monthStart,
+    nextMonthStart,
+    daysInMonth,
+    currentDay,
+    remainingDaysInMonth: Math.max(1, daysInMonth - currentDay + 1),
+    expectedProgress: daysInMonth > 0 ? currentDay / daysInMonth : 0,
+  }
+}
+
 function parseOpenAiText(payload: Record<string, unknown>) {
   if (typeof payload.output_text === "string") return payload.output_text
   const output = payload.output
@@ -501,6 +525,22 @@ function buildActionPlan(context: ReturnType<typeof buildContext>, insights: AiI
 
   const plan: AiActionPlanItem[] = []
 
+  if (context.monthlySalesGoal > 0 && context.monthlyGoalGap > 0) {
+    const progress = context.monthlyGoalProgress ?? 0
+    const isBehindPace = progress < context.expectedMonthlyGoalProgress * 0.85
+    plan.push({
+      id: "action-monthly-goal",
+      priority: isBehindPace ? "alta" : "media",
+      area: "Meta mensal",
+      title: `Acelerar meta mensal (${Math.round(progress * 100)}%)`,
+      why: `A unidade vendeu ${formatCurrency(context.monthRevenue)} de ${formatCurrency(context.monthlySalesGoal)}. Ainda faltam ${formatCurrency(context.monthlyGoalGap)}.`,
+      nextStep: `Criar uma campanha de 48h combinando produto herói, clientes inativos e meta diária de ${formatCurrency(context.requiredDailyRevenueToGoal)}.`,
+      suggestedOwner: context.role === "super_admin" ? "Gestor da unidade" : "Admin",
+      dueWindow: isBehindPace ? "Hoje" : "Esta semana",
+      actionRoute: "/promos",
+    })
+  }
+
   if (lowStock.length > 0) {
     plan.push({
       id: "action-low-stock",
@@ -581,6 +621,20 @@ function buildContentIdeas(context: ReturnType<typeof buildContext>, insights: A
     ?? context.products[0]
 
   const ideas: AiContentIdea[] = []
+
+  if (context.monthlySalesGoal > 0 && context.monthlyGoalGap > 0) {
+    ideas.push({
+      id: "content-monthly-goal",
+      channel: "WhatsApp",
+      theme: "Campanha para bater a meta",
+      format: "Lista de transmissão + status",
+      hook: `Faltam ${formatCurrency(context.monthlyGoalGap)} para a meta do mês.`,
+      caption: `Hoje a curadoria é direta: selecione 3 produtos com boa saída, convide clientes inativos e ofereça um kit com chamada simples para fechar a diferença da meta.`,
+      cta: "Chamar clientes prioritários",
+      relatedProducts: context.products.slice(0, 3).map((item) => item.name),
+    })
+  }
+
   if (product) {
     ideas.push({
       id: "content-last-units",
@@ -671,8 +725,27 @@ function buildPerformanceSignals(context: ReturnType<typeof buildContext>): AiPe
     return (product.daysSinceCreated ?? 0) >= 21
   }).length
   const inactiveCount = context.clients.filter((client) => (client.daysSinceLastPurchase ?? 999) >= 45).length
+  const monthlyProgress = context.monthlyGoalProgress ?? 0
+  const monthlyGoalSignal: AiPerformanceSignal = context.monthlySalesGoal > 0
+    ? {
+      id: "signal-monthly-goal",
+      metric: "Meta mensal",
+      status: monthlyProgress >= context.expectedMonthlyGoalProgress ? "bom" : monthlyProgress < context.expectedMonthlyGoalProgress * 0.75 ? "crítico" : "atenção",
+      summary: `${formatCurrency(context.monthRevenue)} vendidos de ${formatCurrency(context.monthlySalesGoal)} (${Math.round(monthlyProgress * 100)}%).`,
+      recommendation: context.monthlyGoalGap > 0
+        ? `Faltam ${formatCurrency(context.monthlyGoalGap)}. Ritmo sugerido: ${formatCurrency(context.requiredDailyRevenueToGoal)} por dia até virar o mês.`
+        : "Meta atingida. Use a Sophia para proteger estoque e manter relacionamento ativo.",
+    }
+    : {
+      id: "signal-monthly-goal",
+      metric: "Meta mensal",
+      status: "atenção",
+      summary: "A unidade ainda não tem meta mensal configurada.",
+      recommendation: "Configure uma meta em Ajustes para a Sophia medir ritmo, falta para meta e campanhas de recuperação.",
+    }
 
   return [
+    monthlyGoalSignal,
     {
       id: "signal-stock",
       metric: "Estoque crítico",
@@ -706,6 +779,25 @@ function buildPerformanceSignals(context: ReturnType<typeof buildContext>): AiPe
 
 function fallbackInsights(context: ReturnType<typeof buildContext>): AiInsight[] {
   const insights: AiInsight[] = []
+
+  if (context.monthlySalesGoal > 0 && context.monthlyGoalGap > 0) {
+    const progress = context.monthlyGoalProgress ?? 0
+    insights.push({
+      id: "monthly-goal",
+      kind: "operacao",
+      priority: progress < context.expectedMonthlyGoalProgress * 0.85 ? "alta" : "media",
+      title: "Meta mensal precisa de ação comercial",
+      summary: `A unidade está em ${Math.round(progress * 100)}% da meta. Faltam ${formatCurrency(context.monthlyGoalGap)} e o ritmo sugerido é ${formatCurrency(context.requiredDailyRevenueToGoal)} por dia.`,
+      rationale: `Meta configurada: ${formatCurrency(context.monthlySalesGoal)}. Vendido no mês: ${formatCurrency(context.monthRevenue)}.`,
+      actionLabel: "Criar campanha",
+      actionRoute: "/promos",
+      confidence: 0.84,
+      marketingAngles: ["Campanha de recuperação", "Meta do mês", "Lista de clientes prioritários"],
+      postIdeas: ["Status WhatsApp com curadoria da semana", "Story com kit rápido para fechar o mês"],
+      relatedProducts: context.products.slice(0, 3).map((product) => product.name),
+      relatedClients: context.clients.slice(0, 3).map((client) => client.name),
+    })
+  }
 
   for (const product of context.products.filter((p) => p.stock <= p.lowStockThreshold).slice(0, 2)) {
     insights.push({
@@ -841,6 +933,21 @@ function buildContext(params: {
 
   const totalRevenue = params.sales.reduce((sum, sale) => sum + safeNumber(sale.total), 0)
   const averageTicket = params.sales.length ? totalRevenue / params.sales.length : 0
+  const monthContext = getCurrentMonthContext()
+  const monthSales = params.sales.filter((sale) => {
+    const createdAt = new Date(sale.created_at)
+    return createdAt >= monthContext.monthStart && createdAt < monthContext.nextMonthStart
+  })
+  const monthRevenue = monthSales.reduce((sum, sale) => sum + safeNumber(sale.total), 0)
+  const monthlySalesGoal = params.settings.reduce(
+    (sum, setting) => sum + safeNumber(setting.monthly_sales_goal),
+    0,
+  )
+  const monthlyGoalProgress = monthlySalesGoal > 0 ? monthRevenue / monthlySalesGoal : null
+  const monthlyGoalGap = monthlySalesGoal > 0 ? Math.max(0, monthlySalesGoal - monthRevenue) : 0
+  const requiredDailyRevenueToGoal = monthlySalesGoal > 0
+    ? monthlyGoalGap / monthContext.remainingDaysInMonth
+    : 0
 
   return {
     generatedAt: new Date().toISOString(),
@@ -850,6 +957,14 @@ function buildContext(params: {
     totalRevenue90d: totalRevenue,
     salesCount90d: params.sales.length,
     averageTicket90d: averageTicket,
+    monthRevenue,
+    monthSalesCount: monthSales.length,
+    monthlySalesGoal,
+    monthlyGoalProgress,
+    monthlyGoalGap,
+    requiredDailyRevenueToGoal,
+    expectedMonthlyGoalProgress: monthContext.expectedProgress,
+    remainingDaysInMonth: monthContext.remainingDaysInMonth,
     vipThreshold: params.settings[0]?.vip_threshold ?? 500,
     birthdayAlertDays: params.settings[0]?.birthday_alert_days ?? 7,
     products: products
@@ -890,10 +1005,13 @@ async function createAiInsights(context: ReturnType<typeof buildContext>) {
 
   const systemPrompt = [
     "Voce e Sophia IA, estrategista comercial e de marketing para pequenos estabelecimentos de beleza.",
-    "Analise estoque, vendas, clientes, ticket medio, comportamento recente e calendario comercial.",
+    "Analise estoque, vendas, clientes, ticket medio, meta mensal, ritmo do mes, comportamento recente e calendario comercial.",
     "Gere direcionamento pratico em pt-BR: o que fazer, por que fazer, qual campanha criar e quais ideias de postagem usar.",
     "A resposta deve funcionar como central de comando: plano de acao, sinais de performance, mensagens para clientes, ideias de conteudo e automacoes.",
     "Para cada recomendacao, seja especifico: cite produtos/clientes quando existirem, prioridade, proximo passo, canal e chamada para acao.",
+    "Se monthlySalesGoal for maior que zero, use monthRevenue, monthlyGoalGap, monthlyGoalProgress, expectedMonthlyGoalProgress e requiredDailyRevenueToGoal para indicar se a unidade esta no ritmo da meta.",
+    "Quando a meta estiver atrasada, recomende uma acao comercial concreta: campanha de 48h, lista de clientes, produto heroi, kit, WhatsApp, vitrine ou postagem.",
+    "Quando a meta nao estiver configurada, trate isso como lacuna de gestao e sugira configurar em Ajustes, sem inventar percentuais.",
     "Nunca invente dados. Use apenas produtos e clientes presentes no contexto.",
     "So trate aniversario como acao ativa quando daysUntilBirthday estiver dentro de birthdayAlertDays.",
     "Se daysUntilBirthday for maior que birthdayAlertDays, pode citar como planejamento futuro, mas nao como alerta da semana.",
@@ -976,6 +1094,20 @@ async function createAiInsights(context: ReturnType<typeof buildContext>) {
       performanceSignals?: Array<Partial<AiPerformanceSignal>>
     }
     const insights = (parsed.insights || []).map(normalizeInsight).slice(0, 8)
+    const performanceSignals = (parsed.performanceSignals || fallbackPerformanceSignals)
+      .map(normalizePerformanceSignal)
+      .slice(0, 8)
+    const hasMonthlyGoalSignal = performanceSignals.some((signal) => {
+      const normalizedMetric = signal.metric
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+      return signal.id === "signal-monthly-goal" || normalizedMetric.includes("meta mensal")
+    })
+    const monthlyGoalSignal = fallbackPerformanceSignals.find((signal) => signal.id === "signal-monthly-goal")
+    const mergedPerformanceSignals = hasMonthlyGoalSignal || !monthlyGoalSignal
+      ? performanceSignals
+      : [monthlyGoalSignal, ...performanceSignals].slice(0, 8)
 
     return {
       source: "openai",
@@ -989,7 +1121,7 @@ async function createAiInsights(context: ReturnType<typeof buildContext>) {
         (parsed.customerActions || fallbackCustomerActions).map(normalizeCustomerAction),
         context,
       ).slice(0, 8),
-      performanceSignals: (parsed.performanceSignals || fallbackPerformanceSignals).map(normalizePerformanceSignal).slice(0, 8),
+      performanceSignals: mergedPerformanceSignals,
     }
   } catch (error) {
     console.error("OpenAI parse error:", error)
@@ -1084,6 +1216,18 @@ Deno.serve(async (req) => {
           contentIdeas: [],
           customerActions: [],
           performanceSignals: [],
+          metrics: {
+            establishments: 0,
+            products: 0,
+            clients: 0,
+            sales90d: 0,
+            averageTicket90d: 0,
+            monthRevenue: 0,
+            monthlySalesGoal: 0,
+            monthlyGoalProgress: null,
+            monthlyGoalGap: 0,
+            requiredDailyRevenueToGoal: 0,
+          },
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       )
@@ -1102,7 +1246,7 @@ Deno.serve(async (req) => {
       adminClient.from("products").select("id, establishment_id, name, category, price, cost, stock, created_at, updated_at").eq("active", true).in("establishment_id", establishmentIds).limit(80),
       adminClient.from("clients").select("id, establishment_id, name, birthday, created_at").eq("active", true).in("establishment_id", establishmentIds).limit(120),
       adminClient.from("sales").select("id, establishment_id, client_id, payment_method, total, items_count, created_at").is("refunded_at", null).in("establishment_id", establishmentIds).gte("created_at", since).limit(180),
-      adminClient.from("store_settings").select("establishment_id, low_stock_threshold, vip_threshold, birthday_alert_days, default_markup").in("establishment_id", establishmentIds),
+      adminClient.from("store_settings").select("establishment_id, low_stock_threshold, vip_threshold, birthday_alert_days, default_markup, monthly_sales_goal").in("establishment_id", establishmentIds),
     ])
 
     for (const result of [establishmentsResult, productsResult, clientsResult, salesResult, settingsResult]) {
@@ -1141,6 +1285,11 @@ Deno.serve(async (req) => {
           clients: context.clients.length,
           sales90d: context.salesCount90d,
           averageTicket90d: context.averageTicket90d,
+          monthRevenue: context.monthRevenue,
+          monthlySalesGoal: context.monthlySalesGoal,
+          monthlyGoalProgress: context.monthlyGoalProgress,
+          monthlyGoalGap: context.monthlyGoalGap,
+          requiredDailyRevenueToGoal: context.requiredDailyRevenueToGoal,
         },
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
