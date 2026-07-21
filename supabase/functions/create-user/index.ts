@@ -1,16 +1,46 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
-const allowedOrigin = Deno.env.get("ALLOWED_ORIGIN") ?? "http://localhost:8080"
+const defaultAllowedOrigins = [
+  "https://crm-make-dwp.pages.dev",
+  "http://localhost:8080",
+]
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": allowedOrigin,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+function getAllowedOrigins() {
+  const configured = [
+    Deno.env.get("ALLOWED_ORIGIN"),
+    Deno.env.get("ALLOWED_ORIGINS"),
+  ]
+    .filter(Boolean)
+    .flatMap((value) => value!.split(","))
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  return new Set([...defaultAllowedOrigins, ...configured])
+}
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") ?? ""
+  const allowedOrigins = getAllowedOrigins()
+  const isPagesPreview = origin.startsWith("https://") && origin.endsWith(".crm-make-dwp.pages.dev")
+  const allowedOrigin = allowedOrigins.has(origin) || isPagesPreview
+    ? origin
+    : defaultAllowedOrigins[0]
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  }
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req)
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
+    return new Response("ok", { status: 200, headers: corsHeaders })
   }
 
   try {
