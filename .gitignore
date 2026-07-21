@@ -1,0 +1,21 @@
+# Env / segredos
+.env
+.env.*
+*.local
+!.env.example
+docs/credentials.md
+
+# Dependências e build
+node_modules/
+dist/
+build/
+
+# Supabase CLI local
+supabase/.temp/
+
+# Sistema
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

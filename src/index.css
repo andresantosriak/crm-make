@@ -1,0 +1,71 @@
+@import "tailwindcss";
+@import "./styles/animations.css";
+
+@theme {
+  --color-app-bg: #16120E;
+  --color-device-bg: #050403;
+  --color-card: #221C15;
+  --color-card-hover: #2A2219;
+  --color-gold: #C8A24C;
+  --color-gold-light: #d9b869;
+  --color-gold-dark: #b78d3d;
+  --color-text-primary: #F1EBDF;
+  --color-text-secondary: #A79B88;
+  --color-text-muted: #7c7264;
+  --color-success: #8FA98A;
+  --color-danger: #D07C67;
+  --color-border-subtle: rgba(233, 220, 198, 0.08);
+
+  --font-display: "Cormorant Garamond", serif;
+  --font-body: "Jost", system-ui, sans-serif;
+
+  --radius-card: 14px;
+  --radius-card-lg: 18px;
+  --radius-input: 12px;
+  --radius-chip: 20px;
+  --radius-tile: 11px;
+
+  --animate-fadeup: fadeup 0.35s ease;
+  --animate-glow: glow 2.4s ease infinite;
+  --animate-pop: pop 0.25s ease;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    background: #16120E;
+    min-height: 100%;
+  }
+
+  body {
+    background: #16120E;
+    color: #F1EBDF;
+    font-family: "Jost", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100dvh;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  input::placeholder {
+    color: #7c7264;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
