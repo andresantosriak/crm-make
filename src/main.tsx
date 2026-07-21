@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider, QueryCache } from '@tanstack/react-query'
 import { Toaster, toast } from 'sonner'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { CartProvider } from '@/contexts/CartContext'
 import App from '@/App'
 import '@/index.css'
 
@@ -28,10 +27,8 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <App />
-          <Toaster richColors position="top-right" />
-        </CartProvider>
+        <App />
+        <Toaster richColors position="top-right" />
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,

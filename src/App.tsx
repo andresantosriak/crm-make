@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AdminRoute } from '@/components/auth/AdminRoute'
+import { CartProvider } from '@/contexts/CartContext'
 
 const LoginPage = lazy(() => import('@/pages/LoginPage'))
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
@@ -35,7 +36,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route element={<AppShell />}>
+            <Route element={<CartProvider><AppShell /></CartProvider>}>
               <Route index element={<DashboardPage />} />
               <Route path="/vendas" element={<NewSalePage />} />
               <Route path="/historico" element={<HistoryPage />} />
