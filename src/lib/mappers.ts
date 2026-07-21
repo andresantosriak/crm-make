@@ -4,6 +4,7 @@ export function toProfile(row: Record<string, unknown>): Profile {
   return {
     id: row.id as string,
     establishmentId: (row.establishment_id as string) ?? null,
+    email: (row.email as string) ?? null,
     fullName: row.full_name as string,
     role: row.role as 'super_admin' | 'admin' | 'employee',
     createdAt: row.created_at as string,

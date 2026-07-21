@@ -47,32 +47,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single()
 
     if (!error && data) {
-      setProfile(toProfile(data as Record<string, unknown>))
+      const nextProfile = toProfile(data as Record<string, unknown>)
+      setProfile(nextProfile)
+      return nextProfile
     }
+
+    setProfile(null)
+    return null
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession)
       if (initialSession) {
-        supabase.auth.getUser().then(({ data: { user: verifiedUser } }) => {
-          setUser(verifiedUser)
-          if (verifiedUser) {
-            fetchProfile(verifiedUser.id)
-          }
-          setIsLoading(false)
-        })
+        const { data: { user: verifiedUser } } = await supabase.auth.getUser()
+        setUser(verifiedUser)
+        if (verifiedUser) {
+          await fetchProfile(verifiedUser.id)
+        }
+        setIsLoading(false)
       } else {
         setIsLoading(false)
       }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      async (_event, newSession) => {
         setSession(newSession)
         if (newSession?.user) {
           setUser(newSession.user)
-          fetchProfile(newSession.user.id)
+          await fetchProfile(newSession.user.id)
         } else {
           setUser(null)
           setProfile(null)

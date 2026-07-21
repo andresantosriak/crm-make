@@ -1,6 +1,7 @@
 export interface Profile {
   id: string
   establishmentId: string | null
+  email: string | null
   fullName: string
   role: 'super_admin' | 'admin' | 'employee'
   createdAt: string

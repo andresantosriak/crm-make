@@ -1,9 +1,23 @@
 import { useState, useCallback, useEffect, useMemo, type FormEvent } from 'react'
-import { Building2, Plus, Shield, User } from 'lucide-react'
+import { Building2, CalendarDays, Mail, Plus, Shield, User, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useUsers, useCreateUser, useUpdateUserRole } from '@/hooks/useUsers'
 import { useCreateEstablishment, useEstablishments } from '@/hooks/useEstablishments'
 import { ClientAvatar } from '@/components/client/ClientAvatar'
+
+function getRoleLabel(role: string) {
+  if (role === 'super_admin') return 'Admin geral'
+  if (role === 'admin') return 'Admin local'
+  return 'Funcionário'
+}
+
+function formatProfileDate(value: string) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(value))
+}
 
 export default function UsersPage() {
   const { user, isSuperAdmin, selectedEstablishmentId } = useAuth()
@@ -21,12 +35,22 @@ export default function UsersPage() {
   const [newRole, setNewRole] = useState<'admin' | 'employee'>('employee')
   const [newEstablishmentId, setNewEstablishmentId] = useState(selectedEstablishmentId ?? '')
   const [newEstablishmentName, setNewEstablishmentName] = useState('')
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const passwordTooShort = newPassword.length > 0 && newPassword.length < 8
   const establishmentById = useMemo(
     () => new Map(establishments.map((establishment) => [establishment.id, establishment.name])),
     [establishments],
   )
+  const selectedUser = useMemo(
+    () => users?.find((member) => member.id === selectedUserId) ?? null,
+    [users, selectedUserId],
+  )
+  const selectedUserEstablishment = selectedUser?.role === 'super_admin'
+    ? 'Todos os estabelecimentos'
+    : selectedUser?.establishmentId
+      ? establishmentById.get(selectedUser.establishmentId) ?? 'Unidade não encontrada'
+      : 'Sem estabelecimento'
 
   useEffect(() => {
     if (selectedEstablishmentId) {
@@ -235,8 +259,17 @@ export default function UsersPage() {
           const isSelf = u.id === user?.id
           return (
             <div
+              role="button"
+              tabIndex={0}
               key={u.id}
-              className="mb-[9px] flex items-center gap-3 rounded-card bg-card p-[13px]"
+              onClick={() => setSelectedUserId(u.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setSelectedUserId(u.id)
+                }
+              }}
+              className="mb-[9px] flex w-full items-center gap-3 rounded-card bg-card p-[13px] text-left cursor-pointer transition hover:bg-card-hover"
               style={{ border: '1px solid rgba(233,220,198,.08)' }}
             >
               <ClientAvatar name={u.fullName || 'U'} size="md" />
@@ -245,17 +278,17 @@ export default function UsersPage() {
                   {u.fullName || 'Sem nome'}{isSelf ? ' (você)' : ''}
                 </p>
                 <p className="text-[12px] text-text-secondary">
-                  {u.role === 'super_admin'
-                    ? 'Admin geral'
-                    : u.role === 'admin'
-                      ? 'Admin local'
-                      : 'Funcionário'}
+                  {getRoleLabel(u.role)}
                   {isSuperAdmin && u.establishmentId ? ` · ${establishmentById.get(u.establishmentId) ?? 'Unidade'}` : ''}
                 </p>
               </div>
               {!isSelf && u.role !== 'super_admin' && isSuperAdmin && (
                 <button
-                  onClick={() => handleToggleRole(u.id, u.role)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleToggleRole(u.id, u.role)
+                  }}
+                  onKeyDown={(event) => event.stopPropagation()}
                   disabled={updateRole.isPending}
                   className="flex items-center gap-1.5 rounded-[10px] border px-3 py-2 text-[12px] cursor-pointer disabled:opacity-50"
                   style={{
@@ -272,6 +305,96 @@ export default function UsersPage() {
             </div>
           )
         })
+      )}
+
+      {selectedUser && (
+        <div className="fixed inset-0 z-[70]">
+          <button
+            type="button"
+            aria-label="Fechar detalhes do membro"
+            className="absolute inset-0 bg-black/55"
+            onClick={() => setSelectedUserId(null)}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 rounded-t-[22px] bg-card px-5 pb-7 pt-4 animate-fadeup"
+            style={{
+              borderTop: '1px solid rgba(233,220,198,.12)',
+              boxShadow: '0 -18px 48px rgba(0,0,0,.35)',
+            }}
+          >
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-text-muted/40" />
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <ClientAvatar name={selectedUser.fullName || 'U'} size="lg" />
+                <div className="min-w-0">
+                  <h2 className="truncate font-display text-[25px] font-medium text-text-primary">
+                    {selectedUser.fullName || 'Sem nome'}
+                    {selectedUser.id === user?.id ? ' (você)' : ''}
+                  </h2>
+                  <p className="text-[13px] text-gold-light">{getRoleLabel(selectedUser.role)}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUserId(null)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-text-secondary"
+                style={{ borderColor: 'rgba(233,220,198,.10)', background: 'rgba(255,255,255,.03)' }}
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="rounded-card bg-app-bg p-3.5" style={{ border: '1px solid rgba(233,220,198,.08)' }}>
+                <div className="mb-1.5 flex items-center gap-2 text-[12px] uppercase tracking-[.08em] text-text-secondary">
+                  <Mail size={14} />
+                  E-mail
+                </div>
+                <p className="break-all text-[15px] font-medium text-text-primary">
+                  {selectedUser.email || 'E-mail não informado'}
+                </p>
+              </div>
+
+              <div className="rounded-card bg-app-bg p-3.5" style={{ border: '1px solid rgba(233,220,198,.08)' }}>
+                <div className="mb-1.5 flex items-center gap-2 text-[12px] uppercase tracking-[.08em] text-text-secondary">
+                  <Building2 size={14} />
+                  Estabelecimento
+                </div>
+                <p className="text-[15px] font-medium text-text-primary">{selectedUserEstablishment}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-card bg-app-bg p-3.5" style={{ border: '1px solid rgba(233,220,198,.08)' }}>
+                  <div className="mb-1.5 flex items-center gap-2 text-[12px] uppercase tracking-[.08em] text-text-secondary">
+                    <Shield size={14} />
+                    Cargo
+                  </div>
+                  <p className="text-[15px] font-medium text-text-primary">{getRoleLabel(selectedUser.role)}</p>
+                </div>
+
+                <div className="rounded-card bg-app-bg p-3.5" style={{ border: '1px solid rgba(233,220,198,.08)' }}>
+                  <div className="mb-1.5 flex items-center gap-2 text-[12px] uppercase tracking-[.08em] text-text-secondary">
+                    <CalendarDays size={14} />
+                    Criado em
+                  </div>
+                  <p className="text-[15px] font-medium text-text-primary">
+                    {formatProfileDate(selectedUser.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-card bg-app-bg p-3.5" style={{ border: '1px solid rgba(233,220,198,.08)' }}>
+                <p className="mb-1 text-[12px] uppercase tracking-[.08em] text-text-secondary">Código interno</p>
+                <p className="break-all text-[12px] text-text-muted">{selectedUser.id}</p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-center text-[12px] text-text-muted">
+              Senhas não são exibidas nem armazenadas nesta tela.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   )
