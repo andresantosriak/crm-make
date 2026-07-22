@@ -121,6 +121,8 @@ describe('Application types — Product.cost is nullable (view masking)', () => 
     const product: import('@/types').Product = {
       id: 'test',
       establishmentId: 'est-1',
+      brandId: 'brand-1',
+      brandName: 'Sem marca',
       name: 'Test',
       category: 'Rosto',
       price: 10,

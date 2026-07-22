@@ -3,6 +3,10 @@ import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { toEstablishment } from '@/lib/mappers'
 
+interface UseEstablishmentsOptions {
+  enabled?: boolean
+}
+
 function slugify(value: string) {
   return value
     .normalize('NFD')
@@ -13,9 +17,12 @@ function slugify(value: string) {
     .replace(/^-+|-+$/g, '')
 }
 
-export function useEstablishments() {
+export function useEstablishments(options: UseEstablishmentsOptions = {}) {
+  const enabled = options.enabled ?? true
+
   return useQuery({
     queryKey: ['establishments'],
+    enabled,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('establishments')
@@ -24,6 +31,9 @@ export function useEstablishments() {
         .order('name')
 
       if (error) throw error
+      if (!Array.isArray(data)) {
+        throw new Error('Resposta inválida ao carregar estabelecimentos')
+      }
       return (data as Record<string, unknown>[]).map(toEstablishment)
     },
   })

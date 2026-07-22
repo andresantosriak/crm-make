@@ -158,4 +158,23 @@ describe('AuthContext — profile fallback', () => {
     expect(result.current.profile).toBeNull()
     expect(result.current.user).toBeDefined()
   })
+
+  it('should clear invalid stored session', async () => {
+    const staleUser = { id: 'stale-123', app_metadata: {} }
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: 'stale', user: staleUser } },
+    })
+    mockGetUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Invalid JWT' },
+    })
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    expect(mockSignOut).toHaveBeenCalled()
+    expect(result.current.session).toBeNull()
+    expect(result.current.user).toBeNull()
+    expect(result.current.profile).toBeNull()
+  })
 })

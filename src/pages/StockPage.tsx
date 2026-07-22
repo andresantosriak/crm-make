@@ -14,7 +14,7 @@ export default function StockPage() {
   const { isAdmin } = useAuth()
   const { data: products = [], isPending } = useProducts()
   const softDelete = useSoftDeleteProduct()
-  const { query, setQuery, filtered } = useSearch(products, (p) => p.name)
+  const { query, setQuery, filtered } = useSearch(products, (p) => `${p.name} ${p.brandName ?? ''}`)
 
   return (
     <div className="px-5 pt-1.5 animate-fadeup">
@@ -57,7 +57,8 @@ export default function StockPage() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] font-medium text-text-primary">{product.name}</p>
                 <p className="text-[12px] text-text-secondary">
-                  {formatCurrency(product.price)}{margin != null ? ` · margem ${margin}%` : ''}
+                  {product.brandName ?? 'Sem marca'} · {formatCurrency(product.price)}
+                  {margin != null ? ` · margem ${margin}%` : ''}
                 </p>
               </div>
               <StockBadge stock={product.stock} />

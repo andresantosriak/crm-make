@@ -21,11 +21,23 @@ export interface Establishment {
 export interface Product {
   id: string
   establishmentId: string
+  brandId: string | null
+  brandName: string | null
   name: string
   category: 'Lábios' | 'Rosto' | 'Olhos'
   price: number
   cost: number | null
   stock: number
+  active: boolean
+  createdBy: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProductBrand {
+  id: string
+  establishmentId: string
+  name: string
   active: boolean
   createdBy: string | null
   createdAt: string
@@ -67,7 +79,13 @@ export interface SaleItem {
   productId: string
   quantity: number
   unitPrice: number
+  originalUnitPrice: number | null
+  discountAmount: number
   subtotal: number
+  comboGroupId: string | null
+  comboName: string | null
+  comboDiscountType: ComboDiscountType | null
+  comboDiscountValue: number | null
 }
 
 export interface StoreSettings {
@@ -87,6 +105,31 @@ export interface StoreSettings {
 export interface CartItem {
   product: Product
   quantity: number
+  unitPrice: number
+  originalUnitPrice: number
+  originalSubtotal: number
+  discountAmount: number
+  lineTotal: number
+  comboId?: string
+  comboName?: string
+  comboDiscountType?: ComboDiscountType
+  comboDiscountValue?: number
+}
+
+export type ComboDiscountType = 'percent' | 'fixed'
+
+export interface SaleComboDraft {
+  id: string
+  name: string
+  productIds: string[]
+  discountType: ComboDiscountType
+  discountValue: number
+}
+
+export interface CartComboSummary extends SaleComboDraft {
+  originalSubtotal: number
+  discountAmount: number
+  total: number
 }
 
 export interface ClientTag {

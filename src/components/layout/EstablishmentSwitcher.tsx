@@ -4,7 +4,7 @@ import { useEstablishments } from '@/hooks/useEstablishments'
 
 export function EstablishmentSwitcher() {
   const { isSuperAdmin, selectedEstablishmentId, setSelectedEstablishmentId } = useAuth()
-  const { data: establishments = [] } = useEstablishments()
+  const { data: establishments = [] } = useEstablishments({ enabled: isSuperAdmin })
 
   if (!isSuperAdmin) return null
 

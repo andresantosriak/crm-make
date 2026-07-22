@@ -1,4 +1,4 @@
-import type { Profile, Establishment, Product, Client, Sale, SaleItem, StoreSettings } from '@/types'
+import type { Profile, Establishment, Product, ProductBrand, Client, Sale, SaleItem, StoreSettings } from '@/types'
 
 export function toProfile(row: Record<string, unknown>): Profile {
   return {
@@ -28,11 +28,25 @@ export function toProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
     establishmentId: row.establishment_id as string,
+    brandId: (row.brand_id as string) ?? null,
+    brandName: (row.brand_name as string) ?? null,
     name: row.name as string,
     category: row.category as 'Lábios' | 'Rosto' | 'Olhos',
     price: Number(row.price),
     cost: row.cost != null ? Number(row.cost) : null,
     stock: Number(row.stock),
+    active: row.active as boolean,
+    createdBy: (row.created_by as string) ?? null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  }
+}
+
+export function toProductBrand(row: Record<string, unknown>): ProductBrand {
+  return {
+    id: row.id as string,
+    establishmentId: row.establishment_id as string,
+    name: row.name as string,
     active: row.active as boolean,
     createdBy: (row.created_by as string) ?? null,
     createdAt: row.created_at as string,
@@ -78,7 +92,13 @@ export function toSaleItem(row: Record<string, unknown>): SaleItem {
     productId: row.product_id as string,
     quantity: Number(row.quantity),
     unitPrice: Number(row.unit_price),
+    originalUnitPrice: row.original_unit_price != null ? Number(row.original_unit_price) : null,
+    discountAmount: row.discount_amount != null ? Number(row.discount_amount) : 0,
     subtotal: Number(row.subtotal),
+    comboGroupId: (row.combo_group_id as string) ?? null,
+    comboName: (row.combo_name as string) ?? null,
+    comboDiscountType: row.combo_discount_type as SaleItem['comboDiscountType'] ?? null,
+    comboDiscountValue: row.combo_discount_value != null ? Number(row.combo_discount_value) : null,
   }
 }
 

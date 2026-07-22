@@ -12,6 +12,7 @@ import { ProductListItem } from '@/components/product/ProductListItem'
 import { ProductGridItem } from '@/components/product/ProductGridItem'
 import { CartBar } from '@/components/sale/CartBar'
 import { CheckoutItemList } from '@/components/sale/CheckoutItemList'
+import { ComboBuilder } from '@/components/sale/ComboBuilder'
 import { PaymentGrid } from '@/components/sale/PaymentGrid'
 import { ConfirmButton } from '@/components/sale/ConfirmButton'
 import { ClientPicker } from '@/components/client/ClientPicker'
@@ -42,7 +43,7 @@ export default function NewSalePage() {
     ? products
     : products.filter((p) => p.category === category)
 
-  const { query, setQuery, filtered } = useSearch(categoryFiltered, (p) => p.name)
+  const { query, setQuery, filtered } = useSearch(categoryFiltered, (p) => `${p.name} ${p.brandName ?? ''}`)
 
   const handleConfirmSale = useCallback(() => {
     if (!cart.payment || cart.cartCount === 0) return
@@ -52,7 +53,13 @@ export default function NewSalePage() {
     const items = cart.cartItems.map((ci) => ({
       product_id: ci.product.id,
       quantity: ci.quantity,
-      unit_price: ci.product.price,
+      unit_price: ci.unitPrice,
+      original_unit_price: ci.originalUnitPrice,
+      discount_amount: ci.discountAmount,
+      combo_group_id: ci.comboId ?? null,
+      combo_name: ci.comboName ?? null,
+      combo_discount_type: ci.comboDiscountType ?? null,
+      combo_discount_value: ci.comboDiscountValue ?? null,
     }))
 
     const info = {
@@ -109,6 +116,9 @@ export default function NewSalePage() {
           <SectionLabel>Itens</SectionLabel>
           <CheckoutItemList />
 
+          <SectionLabel>Combos</SectionLabel>
+          <ComboBuilder />
+
           <SectionLabel>Cliente</SectionLabel>
           <button
             onClick={() => setPickerOpen(true)}
@@ -143,16 +153,30 @@ export default function NewSalePage() {
           <PaymentGrid />
 
           <div
-            className="mt-[22px] flex items-center justify-between rounded-[16px] p-4"
+            className="mt-[22px] rounded-[16px] p-4"
             style={{
               background: 'linear-gradient(150deg, #2a2116, #211a12)',
               border: '1px solid rgba(200,162,76,.18)',
             }}
           >
-            <span className="text-[14px] text-text-secondary">Total</span>
-            <span className="font-display text-[28px] font-semibold text-text-primary">
-              {formatCurrency(cart.cartTotal)}
-            </span>
+            {cart.cartDiscountTotal > 0 && (
+              <div className="mb-2 space-y-1">
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-text-secondary">Subtotal</span>
+                  <span className="text-text-primary">{formatCurrency(cart.cartSubtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between text-[13px]">
+                  <span className="text-text-secondary">Descontos em combos</span>
+                  <span className="text-success">− {formatCurrency(cart.cartDiscountTotal)}</span>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-[14px] text-text-secondary">Total</span>
+              <span className="font-display text-[28px] font-semibold text-text-primary">
+                {formatCurrency(cart.cartTotal)}
+              </span>
+            </div>
           </div>
         </div>
 

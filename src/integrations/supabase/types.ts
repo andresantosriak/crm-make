@@ -131,6 +131,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean
+          brand_id: string
           category: string
           cost: number
           created_at: string
@@ -144,6 +145,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          brand_id: string
           category: string
           cost: number
           created_at?: string
@@ -157,6 +159,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          brand_id?: string
           category?: string
           cost?: number
           created_at?: string
@@ -170,6 +173,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "products_brand_tenant_fkey"
+            columns: ["brand_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "product_brands"
+            referencedColumns: ["id", "establishment_id"]
+          },
+          {
             foreignKeyName: "products_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -178,6 +188,51 @@ export type Database = {
           },
           {
             foreignKeyName: "products_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_brands: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          establishment_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          establishment_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          establishment_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_brands_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_brands_establishment_id_fkey"
             columns: ["establishment_id"]
             isOneToOne: false
             referencedRelation: "establishments"
@@ -225,8 +280,14 @@ export type Database = {
       }
       sale_items: {
         Row: {
+          combo_discount_type: string | null
+          combo_discount_value: number | null
+          combo_group_id: string | null
+          combo_name: string | null
+          discount_amount: number
           establishment_id: string
           id: string
+          original_unit_price: number
           product_id: string
           quantity: number
           sale_id: string
@@ -234,8 +295,14 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          combo_discount_type?: string | null
+          combo_discount_value?: number | null
+          combo_group_id?: string | null
+          combo_name?: string | null
+          discount_amount?: number
           establishment_id: string
           id?: string
+          original_unit_price: number
           product_id: string
           quantity: number
           sale_id: string
@@ -243,8 +310,14 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          combo_discount_type?: string | null
+          combo_discount_value?: number | null
+          combo_group_id?: string | null
+          combo_name?: string | null
+          discount_amount?: number
           establishment_id?: string
           id?: string
+          original_unit_price?: number
           product_id?: string
           quantity?: number
           sale_id?: string
@@ -426,6 +499,8 @@ export type Database = {
       products_display: {
         Row: {
           active: boolean | null
+          brand_id: string | null
+          brand_name: string | null
           category: string | null
           cost: number | null
           created_at: string | null
@@ -439,6 +514,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          brand_id?: string | null
+          brand_name?: string | null
           category?: string | null
           cost?: never
           created_at?: string | null
@@ -452,6 +529,8 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          brand_id?: string | null
+          brand_name?: string | null
           category?: string | null
           cost?: never
           created_at?: string | null
@@ -464,6 +543,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "products_brand_tenant_fkey"
+            columns: ["brand_id", "establishment_id"]
+            isOneToOne: false
+            referencedRelation: "product_brands"
+            referencedColumns: ["id", "establishment_id"]
+          },
           {
             foreignKeyName: "products_created_by_fkey"
             columns: ["created_by"]

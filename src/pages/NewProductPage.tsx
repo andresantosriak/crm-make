@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCreateProduct } from '@/hooks/useProducts'
+import { Plus, X } from 'lucide-react'
+import { useCreateProduct, useCreateProductBrand, useProductBrands } from '@/hooks/useProducts'
 import { useAuth } from '@/hooks/useAuth'
 import { useSettings } from '@/hooks/useSettings'
 import { useMarkupCalculator } from '@/hooks/useMarkupCalculator'
@@ -16,9 +17,14 @@ export default function NewProductPage() {
   const navigate = useNavigate()
   const { isAdmin } = useAuth()
   const createProduct = useCreateProduct()
+  const createBrand = useCreateProductBrand()
+  const { data: brands = [], isPending: brandsLoading } = useProductBrands()
   const { defaultMarkup } = useSettings()
 
   const [name, setName] = useState('')
+  const [brandId, setBrandId] = useState('')
+  const [isBrandFormOpen, setIsBrandFormOpen] = useState(false)
+  const [newBrandName, setNewBrandName] = useState('')
   const [category, setCategory] = useState<Product['category']>('Rosto')
   const [costStr, setCostStr] = useState('')
   const [priceStr, setPriceStr] = useState('')
@@ -30,6 +36,12 @@ export default function NewProductPage() {
   const hasCalc = cost > 0 && price > 0
 
   const { markup, margin, profit } = useMarkupCalculator(cost, price)
+
+  useEffect(() => {
+    if (!brandId && brands[0]) {
+      setBrandId(brands[0].id)
+    }
+  }, [brandId, brands])
 
   const handleCostChange = useCallback(
     (value: string) => {
@@ -63,8 +75,9 @@ export default function NewProductPage() {
   }, [price])
 
   const handleSave = useCallback(() => {
-    if (!name.trim() || price <= 0) return
+    if (!name.trim() || !brandId || price <= 0) return
     createProduct.mutate({
+      brandId,
       name: name.trim(),
       category,
       price,
@@ -73,7 +86,20 @@ export default function NewProductPage() {
     }, {
       onSuccess: () => navigate('/estoque'),
     })
-  }, [name, category, price, cost, stockStr, isAdmin, createProduct, navigate])
+  }, [name, brandId, category, price, cost, stockStr, isAdmin, createProduct, navigate])
+
+  const handleCreateBrand = useCallback(() => {
+    const normalizedName = newBrandName.trim()
+    if (!normalizedName) return
+
+    createBrand.mutate({ name: normalizedName }, {
+      onSuccess: (brand) => {
+        setBrandId(brand.id)
+        setNewBrandName('')
+        setIsBrandFormOpen(false)
+      },
+    })
+  }, [newBrandName, createBrand])
 
   const inputStyle = { border: '1px solid rgba(233,220,198,.10)' }
 
@@ -94,6 +120,61 @@ export default function NewProductPage() {
             className="rounded-input bg-card px-4 py-3.5 text-[15px] text-text-primary outline-none"
             style={inputStyle}
           />
+        </div>
+
+        <div className="flex flex-col gap-[7px]">
+          <label className="text-[11px] uppercase tracking-[1.2px] text-text-secondary">Marca</label>
+          <div className="flex gap-2">
+            <select
+              value={brandId}
+              onChange={(e) => setBrandId(e.target.value)}
+              disabled={brandsLoading || brands.length === 0}
+              className="min-w-0 flex-1 rounded-input bg-card px-4 py-3.5 text-[15px] text-text-primary outline-none disabled:text-text-muted"
+              style={inputStyle}
+            >
+              {brandsLoading ? (
+                <option value="">Carregando...</option>
+              ) : brands.length === 0 ? (
+                <option value="">Cadastre uma marca</option>
+              ) : (
+                brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))
+              )}
+            </select>
+            <button
+              type="button"
+              onClick={() => setIsBrandFormOpen((current) => !current)}
+              className="flex h-[50px] w-[50px] items-center justify-center rounded-input bg-card text-gold-light"
+              style={inputStyle}
+              aria-label={isBrandFormOpen ? 'Fechar cadastro de marca' : 'Cadastrar nova marca'}
+            >
+              {isBrandFormOpen ? <X size={18} strokeWidth={1.8} /> : <Plus size={18} strokeWidth={1.8} />}
+            </button>
+          </div>
+
+          {isBrandFormOpen && (
+            <div className="grid grid-cols-[1fr_auto] gap-2">
+              <input
+                value={newBrandName}
+                onChange={(e) => setNewBrandName(e.target.value)}
+                placeholder="Nome da marca"
+                className="min-w-0 rounded-input bg-card px-4 py-3.5 text-[15px] text-text-primary outline-none"
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={handleCreateBrand}
+                disabled={createBrand.isPending || !newBrandName.trim()}
+                className="rounded-input bg-card px-4 py-3 text-[13px] font-medium text-gold-light disabled:text-text-muted"
+                style={inputStyle}
+              >
+                {createBrand.isPending ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-[7px]">
@@ -180,7 +261,7 @@ export default function NewProductPage() {
 
         <button
           onClick={handleSave}
-          disabled={createProduct.isPending}
+          disabled={createProduct.isPending || !brandId}
           className="mt-1.5 w-full rounded-[14px] border-none px-4 py-4 text-[15px] font-semibold tracking-[.4px] cursor-pointer disabled:opacity-60"
           style={{
             background: 'linear-gradient(135deg, #d6b25c, #b78d3d)',

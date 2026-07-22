@@ -54,6 +54,9 @@ describe('CartContext', () => {
     expect(result.current.step).toBe('produtos')
     expect(result.current.client).toBeNull()
     expect(result.current.payment).toBeNull()
+    expect(result.current.combos).toEqual([])
+    expect(result.current.cartSubtotal).toBe(0)
+    expect(result.current.cartDiscountTotal).toBe(0)
     expect(result.current.cartTotal).toBe(0)
     expect(result.current.cartCount).toBe(0)
   })
@@ -67,7 +70,31 @@ describe('CartContext', () => {
 
     expect(result.current.items).toEqual({ '1': 2 })
     expect(result.current.cartCount).toBe(2)
+    expect(result.current.cartSubtotal).toBeCloseTo(79.80)
     expect(result.current.cartTotal).toBeCloseTo(79.80)
+  })
+
+  it('should create named combo and apply discount to cart total', async () => {
+    const { result } = renderHook(() => useCartTest(), { wrapper: createWrapper() })
+    await waitForProducts(result)
+
+    act(() => result.current.addItem('1'))
+    act(() => result.current.addItem('3'))
+    act(() =>
+      result.current.saveCombo({
+        name: 'Kit olhos e boca',
+        productIds: ['1', '3'],
+        discountType: 'percent',
+        discountValue: 10,
+      }),
+    )
+
+    expect(result.current.combos).toHaveLength(1)
+    expect(result.current.cartCombos[0]?.name).toBe('Kit olhos e boca')
+    expect(result.current.cartSubtotal).toBeCloseTo(89.80)
+    expect(result.current.cartDiscountTotal).toBeCloseTo(8.98)
+    expect(result.current.cartTotal).toBeCloseTo(80.82)
+    expect(result.current.cartItems.every((item) => item.comboName === 'Kit olhos e boca')).toBe(true)
   })
 
   it('should remove item when quantity reaches 0', async () => {
@@ -93,6 +120,7 @@ describe('CartContext', () => {
     expect(result.current.items).toEqual({})
     expect(result.current.step).toBe('produtos')
     expect(result.current.payment).toBeNull()
+    expect(result.current.combos).toEqual([])
   })
 
   it('should reset after sale', async () => {
@@ -113,6 +141,7 @@ describe('CartContext', () => {
     expect(result.current.step).toBe('produtos')
     expect(result.current.client).toBeNull()
     expect(result.current.payment).toBeNull()
+    expect(result.current.combos).toEqual([])
     expect(result.current.cartCount).toBe(0)
   })
 })

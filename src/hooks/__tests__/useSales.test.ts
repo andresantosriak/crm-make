@@ -71,8 +71,28 @@ describe('useCreateSale', () => {
     const { result } = renderHook(() => useCreateSale(), { wrapper: createWrapper() })
 
     const items = [
-      { product_id: 'p1', quantity: 2, unit_price: 39.90 },
-      { product_id: 'p2', quantity: 1, unit_price: 29.90 },
+      {
+        product_id: 'p1',
+        quantity: 2,
+        unit_price: 35.91,
+        original_unit_price: 39.90,
+        discount_amount: 7.98,
+        combo_group_id: 'combo-1',
+        combo_name: 'Kit lábios',
+        combo_discount_type: 'percent',
+        combo_discount_value: 10,
+      },
+      {
+        product_id: 'p2',
+        quantity: 1,
+        unit_price: 26.91,
+        original_unit_price: 29.90,
+        discount_amount: 2.99,
+        combo_group_id: 'combo-1',
+        combo_name: 'Kit lábios',
+        combo_discount_type: 'percent',
+        combo_discount_value: 10,
+      },
     ]
 
     await result.current.mutateAsync({
@@ -85,6 +105,7 @@ describe('useCreateSale', () => {
       p_client_id: 'c1',
       p_establishment_id: 'est-1',
       p_payment_method: 'Pix',
+      p_items: items,
     }))
   })
 })

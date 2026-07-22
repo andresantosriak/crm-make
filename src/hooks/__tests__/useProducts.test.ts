@@ -5,11 +5,21 @@ import { createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const mockProducts = [
-  { id: 'abc-1', establishment_id: 'est-1', name: 'Batom Matte', category: 'Lábios', price: 39.90, cost: 14, stock: 24, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
-  { id: 'abc-2', establishment_id: 'est-1', name: 'Base Líquida', category: 'Rosto', price: 79.90, cost: null, stock: 12, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'abc-1', establishment_id: 'est-1', brand_id: 'brand-1', brand_name: 'Ruby Rose', name: 'Batom Matte', category: 'Lábios', price: 39.90, cost: 14, stock: 24, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'abc-2', establishment_id: 'est-1', brand_id: 'brand-2', brand_name: 'Sem marca', name: 'Base Líquida', category: 'Rosto', price: 79.90, cost: null, stock: 12, active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+]
+
+const mockBrands = [
+  { id: 'brand-1', establishment_id: 'est-1', name: 'Ruby Rose', active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
+  { id: 'brand-2', establishment_id: 'est-1', name: 'Sem marca', active: true, created_by: null, created_at: '2026-01-01', updated_at: '2026-01-01' },
 ]
 
 const mockInsert = vi.fn().mockResolvedValue({ error: null })
+const mockBrandInsert = vi.fn().mockReturnValue({
+  select: () => ({
+    single: () => Promise.resolve({ data: mockBrands[0], error: null }),
+  }),
+})
 
 const mockUpdate = vi.fn().mockReturnValue({
   eq: () => Promise.resolve({ error: null }),
@@ -21,6 +31,12 @@ const mockProductsDisplayQuery = {
   order: vi.fn().mockResolvedValue({ data: mockProducts, error: null }),
 }
 mockProductsDisplayQuery.eq.mockReturnValue(mockProductsDisplayQuery)
+
+const mockProductBrandsQuery = {
+  eq: vi.fn(),
+  order: vi.fn().mockResolvedValue({ data: mockBrands, error: null }),
+}
+mockProductBrandsQuery.eq.mockReturnValue(mockProductBrandsQuery)
 
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
@@ -37,6 +53,12 @@ vi.mock('@/integrations/supabase/client', () => ({
         return {
           insert: mockInsert,
           update: mockUpdate,
+        }
+      }
+      if (table === 'product_brands') {
+        return {
+          select: () => mockProductBrandsQuery,
+          insert: mockBrandInsert,
         }
       }
       return {
@@ -66,6 +88,7 @@ describe('useProducts', () => {
     expect(result.current.data).toHaveLength(2)
     expect(result.current.data?.[0]?.name).toBe('Batom Matte')
     expect(result.current.data?.[0]?.id).toBe('abc-1')
+    expect(result.current.data?.[0]?.brandName).toBe('Ruby Rose')
   })
 
   it('should map snake_case to camelCase', async () => {
@@ -90,12 +113,40 @@ describe('useProducts', () => {
   })
 })
 
+describe('useProductBrands', () => {
+  it('should fetch active product brands by establishment', async () => {
+    const { useProductBrands } = await import('../useProducts')
+    const { result } = renderHook(() => useProductBrands(), { wrapper: createWrapper() })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(result.current.data?.map((brand) => brand.name)).toEqual(['Ruby Rose', 'Sem marca'])
+    expect(mockProductBrandsQuery.eq).toHaveBeenCalledWith('establishment_id', 'est-1')
+  })
+})
+
+describe('useCreateProductBrand', () => {
+  it('should insert a brand in the current establishment', async () => {
+    const { useCreateProductBrand } = await import('../useProducts')
+    const { result } = renderHook(() => useCreateProductBrand(), { wrapper: createWrapper() })
+
+    const brand = await result.current.mutateAsync({ name: ' Ruby Rose ' })
+
+    expect(mockBrandInsert).toHaveBeenCalledWith({
+      establishment_id: 'est-1',
+      name: 'Ruby Rose',
+    })
+    expect(brand.id).toBe('brand-1')
+  })
+})
+
 describe('useCreateProduct', () => {
   it('should call insert on products table', async () => {
     const { useCreateProduct } = await import('../useProducts')
     const { result } = renderHook(() => useCreateProduct(), { wrapper: createWrapper() })
 
     await result.current.mutateAsync({
+      brandId: 'brand-1',
       name: 'Novo Produto',
       category: 'Rosto',
       price: 49.90,
@@ -105,6 +156,7 @@ describe('useCreateProduct', () => {
 
     expect(mockInsert).toHaveBeenCalledWith({
       establishment_id: 'est-1',
+      brand_id: 'brand-1',
       name: 'Novo Produto',
       category: 'Rosto',
       price: 49.90,

@@ -21,7 +21,7 @@ export function ProductListItem({ product, quantity, onAdd, onRemove }: ProductL
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-medium text-text-primary">{product.name}</p>
         <p className="text-[12px] text-text-secondary">
-          {product.category} · {formatCurrency(product.price)}
+          {product.brandName ?? 'Sem marca'} · {product.category} · {formatCurrency(product.price)}
         </p>
       </div>
       {inCart ? (

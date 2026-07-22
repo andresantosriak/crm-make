@@ -38,7 +38,17 @@ export function useCreateSale() {
     mutationFn: async (input: {
       p_client_id: string | null
       p_payment_method: string
-      p_items: Array<{ product_id: string; quantity: number; unit_price: number }>
+      p_items: Array<{
+        product_id: string
+        quantity: number
+        unit_price: number
+        original_unit_price?: number
+        discount_amount?: number
+        combo_group_id?: string | null
+        combo_name?: string | null
+        combo_discount_type?: string | null
+        combo_discount_value?: number | null
+      }>
     }) => {
       if (!establishmentId) {
         throw new Error('Selecione um estabelecimento antes de registrar venda')

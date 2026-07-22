@@ -57,36 +57,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
-      setSession(initialSession)
-      if (initialSession) {
-        const { data: { user: verifiedUser } } = await supabase.auth.getUser()
-        setUser(verifiedUser)
-        if (verifiedUser) {
-          await fetchProfile(verifiedUser.id)
-        }
-        setIsLoading(false)
-      } else {
-        setIsLoading(false)
+    let mounted = true
+
+    async function clearInvalidSession(shouldSignOut = false) {
+      if (shouldSignOut) {
+        await supabase.auth.signOut()
       }
+      if (!mounted) return
+      setSession(null)
+      setUser(null)
+      setProfile(null)
+      setIsLoading(false)
+    }
+
+    async function applySession(nextSession: Session | null) {
+      if (!nextSession) {
+        await clearInvalidSession()
+        return
+      }
+
+      const { data: { user: verifiedUser }, error } = await supabase.auth.getUser()
+      if (error || !verifiedUser) {
+        await clearInvalidSession(true)
+        return
+      }
+
+      if (!mounted) return
+      setSession(nextSession)
+      setUser(verifiedUser)
+      await fetchProfile(verifiedUser.id)
+      if (!mounted) return
+      setIsLoading(false)
+    }
+
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      void applySession(initialSession)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (_event, newSession) => {
         setIsLoading(true)
-        setSession(newSession)
-        if (newSession?.user) {
-          setUser(newSession.user)
-          await fetchProfile(newSession.user.id)
-        } else {
-          setUser(null)
-          setProfile(null)
-        }
-        setIsLoading(false)
+        void applySession(newSession)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [fetchProfile])
 
   const signIn = useCallback(async (email: string, password: string) => {

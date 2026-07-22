@@ -20,8 +20,13 @@ export function CheckoutItemList() {
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] text-text-primary">{ci.product.name}</p>
             <p className="text-[12px] text-text-secondary">
-              {ci.quantity}x {formatCurrency(ci.product.price)} = {formatCurrency(ci.product.price * ci.quantity)}
+              {ci.quantity}x {formatCurrency(ci.unitPrice)} = {formatCurrency(ci.lineTotal)}
             </p>
+            {ci.comboName && (
+              <p className="mt-0.5 text-[11px] text-success">
+                {ci.comboName} · desconto {formatCurrency(ci.discountAmount)}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-[9px]">
             <button

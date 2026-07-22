@@ -23,6 +23,9 @@ export function ProductGridItem({ product, quantity, onAdd }: ProductGridItemPro
       <p className="mt-2.5 h-[34px] overflow-hidden text-[13px] font-medium leading-[1.3] text-text-primary">
         {product.name}
       </p>
+      <p className="mt-1 truncate text-[11px] text-text-secondary">
+        {product.brandName ?? 'Sem marca'}
+      </p>
       <p className="mt-1 text-[14px] font-semibold text-gold-light">
         {formatCurrency(product.price)}
       </p>
